@@ -1,0 +1,19 @@
+[project]
+# name = "Project name..."
+# version = "Project version, e.g. 0.0.1"
+# description = "Project description..."
+# authors = [
+#     {name = "Author name", email = "Author email"},
+#     ...
+# ]
+# license = {text = "Project license on PyPI, e.g. MIT"}
+# dependencies = ["dependency1...", "dependency2...", ...]
+# requires-python = ">=3.9"
+readme = "README.md"
+
+[project.urls]
+# Homepage = "https://github.com/..."
+# Repository = "https://github.com/..."
+
+[tool.pyright]
+pythonVersion = "3.9"
