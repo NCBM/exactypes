@@ -28,3 +28,5 @@ assert a.b == 246.0
 assert not bool(a.m)
 a.m = P(a)
 assert bool(a.m)
+assert a.m.contents.a == 123
+assert a.m.contents.m.contents.b == 246.0
