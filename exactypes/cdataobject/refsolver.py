@@ -1,14 +1,13 @@
 import ast
-import ctypes
 import typing
 from functools import reduce
 from operator import or_
-from typing import Any, Union
+from typing import Any
 from weakref import WeakValueDictionary
 
 import typing_extensions
 
-# from ..types import SupportsDictOrOp
+from ..types import StructUnionType
 
 # from typing import TypeVar
 
@@ -34,7 +33,7 @@ def get_unresolved_names(type_str: str, *namespaces: dict[str, Any]) -> set[str]
 
 
 class RefCache(WeakValueDictionary[str, typing.Any]):
-    _listening: dict[str, tuple[list, Union[ctypes.Structure, ctypes.Union], tuple[dict[str, Any], ...], list[str]]]
+    _listening: dict[str, tuple[list, StructUnionType, tuple[dict[str, Any], ...], list[str]]]
 
     @typing_extensions.override
     def __init__(self, *args, **kwargs) -> None:
@@ -55,13 +54,28 @@ class RefCache(WeakValueDictionary[str, typing.Any]):
         if isinstance(target[1], str):
             target[1] = eval(target[1], _env, self)
         if typing.get_origin(target[1]) is typing.ClassVar:
-            target[1], = typing.get_args(target[1])
+            (target[1],) = typing.get_args(target[1])
             real_fields.remove(name)
-        if not any(isinstance(_tp, str) for _, _tp, *_ in getattr(orig, "_exactypes_unresolved_fields_")) and getattr(orig, "_fields_", None) is None:
-            orig._fields_ = tuple((n, tp, *data) for n, tp, *data in getattr(orig, "_exactypes_unresolved_fields_"))
+        if (
+            not any(
+                isinstance(_tp, str)
+                for _, _tp, *_ in getattr(orig, "_exactypes_unresolved_fields_")
+            )
+            and getattr(orig, "_fields_", None) is None
+        ):
+            orig._fields_ = tuple(
+                (n, tp, *data) for n, tp, *data in getattr(orig, "_exactypes_unresolved_fields_")
+            )
         del self._listening[key]
 
-    def listen(self, name: str, orig: Union[ctypes.Structure, ctypes.Union], target: list, real_fields: list[str], *namespaces: dict[str, Any]) -> None:
+    def listen(
+        self,
+        name: str,
+        orig: StructUnionType,
+        target: list,
+        real_fields: list[str],
+        *namespaces: dict[str, Any],
+    ) -> None:
         if name in self._listening:
             return
         self._listening[name] = target, orig, namespaces, real_fields

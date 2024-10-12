@@ -17,3 +17,7 @@ Repository = "https://github.com/NCBM/exactypes"
 [tool.pyright]
 pythonVersion = "3.9"
 typeCheckingMode = "standard"
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"

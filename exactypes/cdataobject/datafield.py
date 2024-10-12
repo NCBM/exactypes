@@ -13,11 +13,10 @@ class CDataField(typing.Generic[_PT, _CT]):
         self.ptype = ptype
         self.ctype = ctype
 
-    def __get__(self, obj: _CData, type_: typing.Union[type[_CData], None] = None) -> _PT:
+    def __get__(self, obj: _CData, type_: typing.Union[type[_CData], None] = None) -> _PT:  # type: ignore[empty-body]
         ...
 
-    def __set__(self, obj: _CData, value: typing.Union[_PT, _CT]) -> None:
-        ...
+    def __set__(self, obj: _CData, value: typing.Union[_PT, _CT]) -> None: ...
 
 
 py_object = CDataField[_PT, ctypes.py_object]

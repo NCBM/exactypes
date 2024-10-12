@@ -58,6 +58,7 @@ with contextlib.suppress(AttributeError):
 if typing.TYPE_CHECKING:
     Pointer: typing_extensions.TypeAlias = typing.Union[_ctypes._Pointer[_CT], _CArgObject]
 else:
+
     class Pointer:
         def __class_getitem__(cls, pt: type[_CT]) -> type["_ctypes._Pointer[_CT]"]:
             if isinstance(pt, str):

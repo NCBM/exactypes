@@ -16,10 +16,10 @@ class A1(ctypes.Structure):
 
 
 assert A1._fields_ == (
-    ('a', ctypes.c_int),
-    ('_padding', ctypes.c_int),
-    ('b', ctypes.c_double),
-    ('m', P[A1])
+    ("a", ctypes.c_int),
+    ("_padding", ctypes.c_int),
+    ("b", ctypes.c_double),
+    ("m", P[A1]),
 )
 
 a = A1(123, 246, P())
