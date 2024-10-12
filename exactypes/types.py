@@ -18,6 +18,7 @@ else:
 CT = typing.TypeVar("CT", bound=CData)
 PT = typing.TypeVar("PT")
 
+CObjOrPtr: typing_extensions.TypeAlias = typing.Union[CData, PyCPointerType]
 CDataObjectWrapper: typing_extensions.TypeAlias = typing.Callable[[type[CT]], type[CT]]
 StructUnionType: typing_extensions.TypeAlias = typing.Union[
     type[ctypes.Structure], type[ctypes.Union]
