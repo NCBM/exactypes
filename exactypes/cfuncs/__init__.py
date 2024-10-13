@@ -1,4 +1,5 @@
 import ctypes
+import inspect
 import os
 import typing
 from _ctypes import FUNCFLAG_CDECL as _FUNCFLAG_CDECL
@@ -67,6 +68,7 @@ def _create_cfunctype(
 
 
 if os.name == "nt":
+
     def _create_winfunctype(  # type: ignore
         restype_: type[CObjOrPtr],
         *argtypes_: type[CObjOrPtr],
@@ -86,6 +88,7 @@ if os.name == "nt":
             _cache=ctypes._win_functype_cache,  # pyright: ignore[reportAttributeAccessIssue]
         )
 else:
+
     def _create_winfunctype(
         restype_: type[CObjOrPtr],
         *argtypes_: type[CObjOrPtr],
@@ -112,20 +115,26 @@ def _digest_annotated_types(*types_: type) -> tuple[type[CObjOrPtr], ...]:
 
         if not issubclass(tp, (_CData, _PyCPointerType)):
             raise AnnotationError(f"Bad annotation type '{tp!s}'.")
-        
+
         res.append(tp)
     return tuple(res)
 
 
 if typing.TYPE_CHECKING:
-    _PF: typing_extensions.TypeAlias = typing.Union[tuple[int], tuple[int, typing.Optional[str]], tuple[int, typing.Optional[str], typing.Any]]
-    _ECT: typing_extensions.TypeAlias = Callable[[typing.Optional[_CData], _CFuncPtr, tuple[_CData, ...]], _CData]
+    _PF: typing_extensions.TypeAlias = typing.Union[
+        tuple[int], tuple[int, typing.Optional[str]], tuple[int, typing.Optional[str], typing.Any]
+    ]
+    _ECT: typing_extensions.TypeAlias = Callable[
+        [typing.Optional[_CData], _CFuncPtr, tuple[_CData, ...]], _CData
+    ]
+
     class CFnType(_CFuncPtr, typing.Generic[_PS, _PT]):
         _restype_: typing.Union[type[_CData], Callable[[int], typing.Any], None]
         _argtypes_: Sequence[type[_CData]]
         errcheck: _ECT
         # Abstract attribute that must be defined on subclasses
         _flags_: typing.ClassVar[int]
+
         @typing.overload
         def __init__(self) -> None: ...
         @typing.overload
@@ -133,27 +142,104 @@ if typing.TYPE_CHECKING:
         @typing.overload
         def __init__(self, callable: Callable[_PS, _PT], /) -> None: ...
         @typing.overload
-        def __init__(self, func_spec: tuple[typing.Union[str, int], ctypes.CDLL], paramflags: typing.Optional[tuple[_PF, ...]] = ..., /) -> None: ...
+        def __init__(
+            self,
+            func_spec: tuple[typing.Union[str, int], ctypes.CDLL],
+            paramflags: typing.Optional[tuple[_PF, ...]] = ...,
+            /,
+        ) -> None: ...
+
         if os.name == "nt":
+
             @typing.overload
             def __init__(
-                self, vtbl_index: int, name: str, paramflags: typing.Optional[tuple[_PF, ...]] = ..., iid: typing.Optional[_CData] = ..., /
+                self,
+                vtbl_index: int,
+                name: str,
+                paramflags: typing.Optional[tuple[_PF, ...]] = ...,
+                iid: typing.Optional[_CData] = ...,
+                /,
             ) -> None: ...
+
         def __init__(self, *args, **kwargs): ...
-        def __call__(self, *args: _PS.args, **kwds: _PS.kwargs) -> _PT:
-            ...
+        def __call__(self, *args: _PS.args, **kwds: _PS.kwargs) -> _PT: ...
 else:
+
     class CFnType(typing.Generic[_PS, _PT]):
-        def __new__(cls, rtype, *atypes, use_errno: bool = False, use_last_error: bool = True) -> type[_CFuncPtr]:
+        def __new__(
+            cls, rtype, *atypes, use_errno: bool = False, use_last_error: bool = True
+        ) -> type[_CFuncPtr]:
             atypes = _digest_annotated_types(*atypes)
-            rtype, = _digest_annotated_types(rtype)
-            return _create_cfunctype(rtype, *atypes, use_errno=use_errno, use_last_error=use_last_error)
+            (rtype,) = _digest_annotated_types(rtype)
+            return _create_cfunctype(
+                rtype, *atypes, use_errno=use_errno, use_last_error=use_last_error
+            )
 
         def __class_getitem__(cls, args: tuple[Sequence[type], type]) -> type[_CFuncPtr]:
             atypes, rtype = args
             atypes = _digest_annotated_types(*atypes)
-            rtype, = _digest_annotated_types(rtype)
+            (rtype,) = _digest_annotated_types(rtype)
             return _create_cfunctype(rtype, *atypes)
-        
-        def __call__(self, *args: _PS.args, **kwds: _PS.kwargs) -> _PT:
-            ...
+
+        def __call__(self, *args: _PS.args, **kwds: _PS.kwargs) -> _PT: ...
+
+
+class CCallWrapper(typing.Generic[_PS, _PT]):
+    dll: ctypes.CDLL
+    fnname: str
+    argtypes: Sequence[type[CObjOrPtr]]
+    restype: type[_PT]
+
+    def __init__(
+        self,
+        dll: ctypes.CDLL,
+        fn: Callable[_PS, _PT],
+        _env: typing.Optional[types.FrameType] = None,
+    ) -> None:
+        self._solvefn(fn, _env)
+        self.update(dll)
+
+    def __call__(self, *args: _PS.args, **kwargs: _PS.kwargs) -> _PT:
+        return self._func(*args, **kwargs)
+
+    def _solvefn(
+        self, fn: Callable[_PS, _PT], _env: typing.Optional[types.FrameType] = None
+    ) -> None:
+        sig = inspect.signature(fn)
+        self.fnname = fn.__name__
+        _argtypes = [t.annotation for t in sig.parameters.values()]
+        _restype = sig.return_annotation
+        if _env is not None:
+            _argtypes = _digest_annotated_types(
+                *(
+                    (eval(x, _env.f_globals, _env.f_locals) if isinstance(x, str) else x)
+                    for x in _argtypes
+                )
+            )
+
+            (_restype,) = _digest_annotated_types(
+                eval(_restype, _env.f_globals, _env.f_locals)
+                if isinstance(_restype, str)
+                else _restype
+            )
+        self.argtypes = _argtypes
+        self.restype = typing.cast(type[_PT], _restype)
+
+    def update(self, dll: ctypes.CDLL) -> None:
+        self.dll = dll
+        self._func = self.dll[self.fnname]
+        self._func.argtypes = self.argtypes
+        self._func.restype = self.restype
+
+
+def ccall(lib: ctypes.CDLL, *, override_name: typing.Optional[str] = None):
+    frame = inspect.currentframe()
+    if frame is not None:
+        frame = frame.f_back
+
+    def _ccall(fn: Callable[_PS, _PT]) -> CCallWrapper[_PS, _PT]:
+        if override_name is not None:
+            fn.__name__ = override_name
+        return CCallWrapper(lib, fn, frame)
+
+    return _ccall
