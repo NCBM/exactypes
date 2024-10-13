@@ -120,12 +120,16 @@ def _cdataobj(
             (t,) = typing.get_args(t)
             real_fields.remove(n)
 
-        if isinstance(t, (_CData, _PyCPointerType)):
-            _field = [n, t]
-            cls._exactypes_unresolved_fields_.append(_field)
-            continue
+        # if isinstance(t, (_CData, _PyCPointerType, ctypes.Structure, ctypes.Union)):
+        #     _field = [n, t]
+        #     cls._exactypes_unresolved_fields_.append(_field)
+        #     continue
 
         if not isinstance(t, (types.GenericAlias, typing._GenericAlias)):  # type: ignore[attr-defined]  # pyright: ignore[reportAttributeAccessIssue]
+            if issubclass(t, (_CData, _PyCPointerType, ctypes.Structure, ctypes.Union)):
+                _field = [n, t]
+                cls._exactypes_unresolved_fields_.append(_field)
+                continue
             raise AnnotationError(f"Bad annotation type '{t!s}'.")
 
         _type, *data = typing_extensions.get_args(t)
@@ -167,6 +171,7 @@ def _cdataobj(
         and getattr(cls, "_fields_", None) is None
     ):
         cls._fields_ = tuple((n, tp, *data) for n, tp, *data in cls._exactypes_unresolved_fields_)
+        # setattr(cls, "_fields_", tuple((n, tp, *data) for n, tp, *data in cls._exactypes_unresolved_fields_))
 
     return cls
 
