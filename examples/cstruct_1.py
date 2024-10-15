@@ -10,7 +10,7 @@ from exactypes.cdataobject.datafield import c_double, c_int, value
 @cstruct()
 class A1(ctypes.Structure):
     a: c_int = value()
-    _padding: typing.ClassVar[c_int] = value()
+    _padding: typing.ClassVar[c_int]
     b: c_double = value()
     m: P["A1"] = value()  # noqa: UP037
 
