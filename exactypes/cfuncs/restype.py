@@ -36,6 +36,11 @@ if sys.version_info >= (3, 12):
 else:
     HAS_TIME_T = False
 
+if sys.version_info >= (3, 14):
+    c_float_complex = typing.Annotated[complex, ctypes.c_float_complex]
+    c_double_complex = typing.Annotated[complex, ctypes.c_double_complex]
+    c_longdouble_complex = typing.Annotated[complex, ctypes.c_longdouble_complex]
+
 HAS_INT16 = HAS_INT32 = HAS_INT64 = False
 with contextlib.suppress(AttributeError):
     c_int16 = typing.Annotated[int, ctypes.c_int16]

@@ -55,6 +55,13 @@ with contextlib.suppress(AttributeError):
     c_uint64 = typing.Annotated[typing.Union[int, ctypes.c_uint64], ctypes.c_uint64]
     HAS_INT64 = True
 
+if sys.version_info >= (3, 14):
+    c_float_complex = typing.Annotated[complex | ctypes.c_float_complex, ctypes.c_float_complex]
+    c_double_complex = typing.Annotated[complex | ctypes.c_double_complex, ctypes.c_double_complex]
+    c_longdouble_complex = typing.Annotated[
+        complex | ctypes.c_longdouble_complex, ctypes.c_longdouble_complex
+    ]
+
 if typing.TYPE_CHECKING:
     Pointer: typing_extensions.TypeAlias = typing.Union[_ctypes._Pointer[_CT], _CArgObject]
 else:
