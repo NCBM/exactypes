@@ -48,9 +48,16 @@ _exactypes_cstruct_cache: RefCache = RefCache()
 
 
 def _replace_init(cls: StructUnionType, *init_fields: str) -> None:
+    if not init_fields:
+        return
     orig_init = cls.__init__
     _ns: dict[str, Callable[..., dict[str, typing.Any]]] = {}
-    exec("def _check_args(" + ", ".join(init_fields) + "): return locals()", _ns)
+    exec(
+        "def _check_args("
+        + "=None, ".join(init_fields)
+        + "=None): return {k: v for k, v in locals().items() if v is not None}",
+        _ns,
+    )
     fn_check = _ns["_check_args"]
 
     def __init__(self, *args, **kwargs) -> None:

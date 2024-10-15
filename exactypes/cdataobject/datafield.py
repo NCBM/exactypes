@@ -19,6 +19,10 @@ class CDataField(typing.Generic[_PT, _CT]):
     def __set__(self, obj: _CData, value: typing.Union[_PT, _CT]) -> None: ...
 
 
+def value(default: typing.Any = None) -> typing.Any:
+    return default
+
+
 py_object = CDataField[_PT, ctypes.py_object]
 c_short = CDataField[int, ctypes.c_short]
 c_ushort = CDataField[int, ctypes.c_ushort]
