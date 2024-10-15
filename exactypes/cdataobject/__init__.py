@@ -44,14 +44,11 @@ else:
             return typing.cast(type["ctypes._Pointer[_CT]"], ctypes.POINTER(pt))
 
 
-# def _is_annotated(t: typing_extensions.Any) -> typing_extensions.TypeGuard[typing_extensions.Annotated]:
-#     return isinstance(t, typing_extensions._AnnotatedAlias)  # pyright: ignore[reportAttributeAccessIssue]
-
 _exactypes_cstruct_cache: RefCache = RefCache()
 
 
 def _replace_init(cls: StructUnionType, *init_fields: str) -> None:
-    orig_init = getattr(cls, "__init__")
+    orig_init = cls.__init__
     _ns: dict[str, Callable[..., dict[str, typing.Any]]] = {}
     exec("def _check_args(" + ", ".join(init_fields) + "): return locals()", _ns)
     fn_check = _ns["_check_args"]
@@ -59,10 +56,10 @@ def _replace_init(cls: StructUnionType, *init_fields: str) -> None:
     def __init__(self, *args, **kwargs) -> None:
         orig_init(self, **fn_check(*args, **kwargs))
 
-    setattr(cls, "__init__", __init__)
+    cls.__init__ = __init__
 
 
-def _cdataobj(
+def _cdataobj(  # noqa: C901
     cls: typing.Optional[type[_CDO_T]] = None,
     /,
     *,
@@ -120,11 +117,6 @@ def _cdataobj(
             (t,) = typing.get_args(t)
             real_fields.remove(n)
 
-        # if isinstance(t, (_CData, _PyCPointerType, ctypes.Structure, ctypes.Union)):
-        #     _field = [n, t]
-        #     cls._exactypes_unresolved_fields_.append(_field)
-        #     continue
-
         if not isinstance(t, (types.GenericAlias, typing._GenericAlias)):  # type: ignore[attr-defined]  # pyright: ignore[reportAttributeAccessIssue]
             if issubclass(t, (_CData, _PyCPointerType, ctypes.Structure, ctypes.Union)):
                 _field = [n, t]
@@ -171,7 +163,6 @@ def _cdataobj(
         and getattr(cls, "_fields_", None) is None
     ):
         cls._fields_ = tuple((n, tp, *data) for n, tp, *data in cls._exactypes_unresolved_fields_)
-        # setattr(cls, "_fields_", tuple((n, tp, *data) for n, tp, *data in cls._exactypes_unresolved_fields_))
 
     return cls
 

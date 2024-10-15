@@ -26,7 +26,6 @@ from ..types import PyCPointerType as _PyCPointerType
 from . import argtypes as argtypes
 from . import restype as restype
 
-_TVT = typing_extensions.TypeVarTuple("_TVT")
 _PS = typing_extensions.ParamSpec("_PS")
 
 
