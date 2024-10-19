@@ -36,7 +36,7 @@ c_int8 = typing.Annotated[typing.Union[int, ctypes.c_int8], ctypes.c_int8]
 c_uint8 = typing.Annotated[typing.Union[int, ctypes.c_uint8], ctypes.c_uint8]
 
 if sys.version_info >= (3, 12):
-    c_time_t = typing.Annotated[typing.Union[int, ctypes.c_time_t], ctypes.c_time_t]
+    c_time_t = typing.Annotated[int | ctypes.c_time_t, ctypes.c_time_t]
     HAS_TIME_T = True
 else:
     HAS_TIME_T = False
