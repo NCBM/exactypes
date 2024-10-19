@@ -4,7 +4,7 @@ import sys
 import types
 import typing
 from collections.abc import Callable, Sequence
-from functools import partial
+from functools import partial, wraps
 
 import typing_extensions
 
@@ -47,23 +47,29 @@ else:
 _exactypes_cstruct_cache: RefCache = RefCache()
 
 
-def _replace_init(cls: StructUnionType, *init_fields: str) -> None:
+def _replace_init_defaults(cls: StructUnionType, *init_fields: tuple[str, typing.Any]) -> None:
     if not init_fields:
         return
     orig_init = cls.__init__
     _ns: dict[str, Callable[..., dict[str, typing.Any]]] = {}
+    code = "".join(f"{k}={v}, " for k, v in init_fields)
     exec(
         "def _check_args("
-        + "=None, ".join(init_fields)
-        + "=None): return {k: v for k, v in locals().items() if v is not None}",
+        + code
+        + "): return {k: v for k, v in locals().items() if v is not None}",
         _ns,
     )
     fn_check = _ns["_check_args"]
 
+    @wraps(fn_check)
     def __init__(self, *args, **kwargs) -> None:
         orig_init(self, **fn_check(*args, **kwargs))
 
     cls.__init__ = __init__
+
+
+def _replace_init(cls: StructUnionType, *init_fields: str) -> None:
+    return _replace_init_defaults(cls, *((k, None) for k in init_fields))
 
 
 def _cdataobj(  # noqa: C901
@@ -72,13 +78,16 @@ def _cdataobj(  # noqa: C901
     *,
     pack: int = 0,
     align: int = 0,
+    defaults: bool = False,
     cachens: RefCache = _exactypes_cstruct_cache,
     frame: typing.Optional[types.FrameType] = None,
 ) -> typing.Union[type[_CDO_T], CDataObjectWrapper[_CDO_T]]:
     if cls is None:
         return typing.cast(
             CDataObjectWrapper[_CDO_T],
-            partial(_cdataobj, pack=pack, align=align, cachens=cachens, frame=frame),
+            partial(
+                _cdataobj, pack=pack, align=align, defaults=defaults, cachens=cachens, frame=frame
+            ),
         )  # take parameter and go
 
     cachens[cls.__name__] = cls
@@ -163,7 +172,10 @@ def _cdataobj(  # noqa: C901
                 if isinstance(t, str):
                     _field[1] = eval(_field[1], frame.f_globals, frame.f_locals | cachens)
 
-    _replace_init(cls, *real_fields)
+    if defaults:
+        _replace_init_defaults(cls, *((k, cls.__dict__[k]) for k in real_fields))
+    else:
+        _replace_init(cls, *real_fields)
 
     if (
         not any(isinstance(_tp, str) for _, _tp, *_ in cls._exactypes_unresolved_fields_)
@@ -180,7 +192,7 @@ def cstruct(cls: type[ctypes.Structure], /) -> type[ctypes.Structure]: ...
 
 @typing_extensions.overload
 def cstruct(
-    *, pack: int = 0, align: int = 0, cachens: RefCache = ...
+    *, pack: int = 0, align: int = 0, defaults: bool = False, cachens: RefCache = ...
 ) -> CDataObjectWrapper[ctypes.Structure]: ...
 
 
@@ -191,9 +203,17 @@ def cstruct(
     *,
     pack: int = 0,
     align: int = 0,
+    defaults: bool = False,
     cachens: RefCache = _exactypes_cstruct_cache,
 ) -> typing.Union[type[ctypes.Structure], CDataObjectWrapper[ctypes.Structure]]:
-    return _cdataobj(cls, pack=pack, align=align, cachens=cachens, frame=inspect.currentframe())
+    return _cdataobj(
+        cls,
+        pack=pack,
+        align=align,
+        defaults=defaults,
+        cachens=cachens,
+        frame=inspect.currentframe(),
+    )
 
 
 @typing_extensions.overload
@@ -202,7 +222,7 @@ def cunion(cls: type[ctypes.Union], /) -> type[ctypes.Union]: ...
 
 @typing_extensions.overload
 def cunion(
-    *, pack: int = 0, align: int = 0, cachens: RefCache = ...
+    *, pack: int = 0, align: int = 0, defaults: bool = False, cachens: RefCache = ...
 ) -> CDataObjectWrapper[ctypes.Union]: ...
 
 
@@ -213,6 +233,14 @@ def cunion(
     *,
     pack: int = 0,
     align: int = 0,
+    defaults: bool = False,
     cachens: RefCache = _exactypes_cstruct_cache,
 ) -> typing.Union[type[ctypes.Union], CDataObjectWrapper[ctypes.Union]]:
-    return _cdataobj(cls, pack=pack, align=align, cachens=cachens, frame=inspect.currentframe())
+    return _cdataobj(
+        cls,
+        pack=pack,
+        align=align,
+        defaults=defaults,
+        cachens=cachens,
+        frame=inspect.currentframe(),
+    )
