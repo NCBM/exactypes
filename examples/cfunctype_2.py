@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import ctypes
 
 from exactypes.cfuncs import argtypes, ccall, restype
