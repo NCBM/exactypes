@@ -173,7 +173,7 @@ def _cdataobj(  # noqa: C901
                     _field[1] = eval(_field[1], frame.f_globals, frame.f_locals | cachens)
 
     if defaults:
-        _replace_init_defaults(cls, *((k, cls.__dict__[k]) for k in real_fields))
+        _replace_init_defaults(cls, *((k, cls.__dict__.get(k, None)) for k in real_fields))
     else:
         _replace_init(cls, *real_fields)
 
