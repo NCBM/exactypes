@@ -190,6 +190,9 @@ class CCallWrapper(typing.Generic[_PS, _PT]):
     fnname: str
     argtypes: Sequence[type[CObjOrPtr]]
     restype: type[_PT]
+    _paramorder: tuple[str, ...]
+    _paramdefaults: dict[str, typing.Any]
+    _hasvaargs: bool = False
 
     def __init__(
         self,
@@ -201,29 +204,48 @@ class CCallWrapper(typing.Generic[_PS, _PT]):
         self.update(dll)
 
     def __call__(self, *args: _PS.args, **kwargs: _PS.kwargs) -> _PT:
-        return self._func(*args, **kwargs)
+        kwds = self._paramdefaults | kwargs
+        kwds |= dict(zip(self._paramorder, args))
+        _args = tuple(kwds[k] for k in self._paramorder)
+        _vaargs = args[len(self._paramorder):]
+        return self._func(*_args, *_vaargs)
 
     def _solvefn(
         self, fn: Callable[_PS, _PT], _env: typing.Optional[types.FrameType] = None
     ) -> None:
         sig = inspect.signature(fn)
         self.fnname = fn.__name__
-        _argtypes = [t.annotation for t in sig.parameters.values()]
+        _argtypes: list[typing.Any] = []
+        paramorder: list[str] = []
+        self._paramdefaults = {}
+        for k, p in sig.parameters.items():
+            if p.kind == inspect.Parameter.VAR_POSITIONAL:
+                self._hasvaargs = True
+                continue
+            paramorder.append(k)
+            if p.annotation is inspect.Parameter.empty:
+                raise TypeError(f"unannotated parameter {k!r}.")
+            _argtypes.append(p.annotation)
+            if p.default is not inspect.Parameter.empty:
+                self._paramdefaults[k] = p.default
+        self._paramorder = tuple(paramorder)
         _restype = sig.return_annotation
         if _env is not None:
-            _argtypes = _digest_annotated_types(
+            argtypes = _digest_annotated_types(
                 *(
                     (eval(x, _env.f_globals, _env.f_locals) if isinstance(x, str) else x)
                     for x in _argtypes
                 )
             )
+            self.argtypes = argtypes
 
             (_restype,) = _digest_annotated_types(
                 eval(_restype, _env.f_globals, _env.f_locals)
                 if isinstance(_restype, str)
                 else _restype
             )
-        self.argtypes = _argtypes
+        else:
+            self.argtypes = _argtypes
         self.restype = typing.cast(type[_PT], _restype)
 
     def update(self, dll: ctypes.CDLL) -> None:

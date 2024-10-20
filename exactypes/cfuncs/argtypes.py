@@ -9,6 +9,7 @@ import typing_extensions
 from ..types import CT as _CT
 from ..types import PT as _PT
 from ..types import CArgObject as _CArgObject
+from ..types import CData as _CData
 
 py_object = typing.Annotated[typing.Union[_PT, ctypes.py_object], ctypes.py_object]
 c_short = typing.Annotated[typing.Union[int, ctypes.c_short], ctypes.c_short]
@@ -71,3 +72,6 @@ else:
             if isinstance(pt, str):
                 return typing.cast(type["_ctypes._Pointer[_CT]"], f"P[{pt!s}]")
             return typing.cast(type["_ctypes._Pointer[_CT]"], ctypes.POINTER(pt))
+
+
+VaArgs: typing_extensions.TypeAlias = typing.Union[_CData, Pointer, int, bytes, str, None]
