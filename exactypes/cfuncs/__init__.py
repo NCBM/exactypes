@@ -38,6 +38,8 @@ def _create_functype(
         dict[tuple[type[CObjOrPtr], tuple[type[CObjOrPtr], ...], int], type[_CFuncPtr]]
     ],
 ) -> type[_CFuncPtr]:
+    if _cache is not None and (restype_, argtypes_, flags) in _cache:
+        return _cache[(restype_, argtypes_, flags)]
     _type = type(
         name, (_CFuncPtr,), {"_argtypes_": argtypes_, "_restype_": restype_, "_flags_": flags}
     )
