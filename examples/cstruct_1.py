@@ -24,14 +24,14 @@ assert A1._fields_ == (
 
 a = A1(123, 246, P())
 assert a.a == 123
-assert a.b == 246.0
+assert abs(a.b - 246.0) < 1e-7
 assert not bool(a.m)
 a.m = P(a)
 assert bool(a.m)
 assert a.m.contents.a == 123
-assert a.m.contents.m.contents.b == 246.0
+assert abs(a.m.contents.m.contents.b - 246.0) < 1e-7
 
 b = A1(133, m=P(a))
 assert b.a == 133
-assert b.b == 0.0
+assert abs(b.b - 0.0) < 1e-7
 assert b.m.contents.b == a.b

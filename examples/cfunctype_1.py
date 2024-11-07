@@ -28,5 +28,5 @@ assert bytes_to_float.argtypes == (ctypes.c_char_p, argtypes.Pointer[ctypes.c_ch
 assert bytes_to_float.restype == ctypes.c_double
 
 cp = ctypes.c_char_p()
-assert -1e7 < bytes_to_float(b"1203.46lalala", se=ctypes.byref(cp)) - 1203.46 < 1e7
+assert -1e-7 < bytes_to_float(b"1203.46lalala", se=ctypes.byref(cp)) - 1203.46 < 1e-7
 assert cp.value == b"lalala"

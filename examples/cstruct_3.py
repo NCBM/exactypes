@@ -28,7 +28,7 @@ assert A4._fields_ == (
 
 a = A4()
 assert a.a == 42
-assert abs(a.b - 114.514) < 1e7
+assert abs(a.b - 114.514) < 1e-7
 
 b = A5(b=3.14)
 assert b.a == 1078523331
