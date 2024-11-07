@@ -29,15 +29,55 @@ from . import restype as restype
 _PS = typing_extensions.ParamSpec("_PS")
 
 
+if typing.TYPE_CHECKING:
+
+    class CFunctionType(_CFuncPtr): ...
+
+    if os.name == "nt":
+
+        class WinFunctionType(_CFuncPtr): ...
+
+
+_FunctionType: typing_extensions.TypeAlias = typing.Union[
+    type["CFunctionType"], type["WinFunctionType"]
+]
+
+
+@typing_extensions.overload
 def _create_functype(
-    name: str,
+    name: typing_extensions.Literal["CFunctionType"],
     restype_: type[CObjOrPtr],
     *argtypes_: type[CObjOrPtr],
     flags: int,
     _cache: typing.Optional[
-        dict[tuple[type[CObjOrPtr], tuple[type[CObjOrPtr], ...], int], type[_CFuncPtr]]
+        dict[tuple[type[CObjOrPtr], tuple[type[CObjOrPtr], ...], int], type["CFunctionType"]]
     ],
-) -> type[_CFuncPtr]:
+) -> type["CFunctionType"]: ...
+
+
+@typing_extensions.overload
+def _create_functype(
+    name: typing_extensions.Literal["WinFunctionType"],
+    restype_: type[CObjOrPtr],
+    *argtypes_: type[CObjOrPtr],
+    flags: int,
+    _cache: typing.Optional[
+        dict[tuple[type[CObjOrPtr], tuple[type[CObjOrPtr], ...], int], type["WinFunctionType"]]
+    ],
+) -> type["WinFunctionType"]: ...
+
+
+def _create_functype(
+    name: typing_extensions.Literal["CFunctionType", "WinFunctionType"],
+    restype_: type[CObjOrPtr],
+    *argtypes_: type[CObjOrPtr],
+    flags: int,
+    _cache: typing.Union[
+        dict[tuple[type[CObjOrPtr], tuple[type[CObjOrPtr], ...], int], type["CFunctionType"]],
+        dict[tuple[type[CObjOrPtr], tuple[type[CObjOrPtr], ...], int], type["WinFunctionType"]],
+        None,
+    ],
+) -> _FunctionType:
     if _cache is not None and (restype_, argtypes_, flags) in _cache:
         return _cache[(restype_, argtypes_, flags)]
     _type = type(
@@ -53,7 +93,7 @@ def _create_cfunctype(
     *argtypes_: type[CObjOrPtr],
     use_errno: bool = False,
     use_last_error: bool = False,
-) -> type[_CFuncPtr]:
+) -> type["CFunctionType"]:
     flags = _FUNCFLAG_CDECL
     if use_errno:
         flags |= _FUNCFLAG_USE_ERRNO
@@ -75,7 +115,7 @@ if os.name == "nt":
         *argtypes_: type[CObjOrPtr],
         use_errno: bool = False,
         use_last_error: bool = False,
-    ) -> type[_CFuncPtr]:
+    ) -> type["WinFunctionType"]:
         flags = _FUNCFLAG_STDCALL  # type: ignore
         if use_errno:
             flags |= _FUNCFLAG_USE_ERRNO
@@ -207,7 +247,7 @@ class CCallWrapper(typing.Generic[_PS, _PT]):
         kwds = self._paramdefaults | kwargs
         kwds |= dict(zip(self._paramorder, args))
         _args = tuple(kwds[k] for k in self._paramorder)
-        _vaargs = args[len(self._paramorder):]
+        _vaargs = args[len(self._paramorder) :]
         return self._func(*_args, *_vaargs)
 
     def _solvefn(
