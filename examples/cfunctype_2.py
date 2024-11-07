@@ -4,10 +4,11 @@ import ctypes
 
 from exactypes.cfuncs import argtypes, ccall, restype
 
+libc = ctypes.CDLL("libc.so.6")
 
-@ccall(ctypes.CDLL("libc.so.6"))
-def printf(fmt: argtypes.c_char_p, *args: argtypes.VaArgs) -> restype.c_int:
-    ...
+
+@ccall(libc)
+def printf(fmt: argtypes.c_char_p, *args: argtypes.VaArgs) -> restype.c_int: ...
 
 
 out1 = printf(b"Hello, %s!\n", b"World")

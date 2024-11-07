@@ -296,6 +296,11 @@ class CCallWrapper(typing.Generic[_PS, _PT]):
         self._func.argtypes = self.argtypes
         self._func.restype = self.restype
 
+    def as_cfntype(self) -> type["CFnType[_PS, _PT]"]:
+        if typing.TYPE_CHECKING:
+            return CFnType[_PS, _PT]
+        return CFnType[[*self.argtypes], self.restype]
+
 
 def ccall(lib: ctypes.CDLL, *, override_name: typing.Optional[str] = None):
     frame = inspect.currentframe()
