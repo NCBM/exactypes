@@ -196,7 +196,7 @@ def cstruct(
 ) -> CDataObjectWrapper[ctypes.Structure]: ...
 
 
-@typing_extensions.dataclass_transform(field_specifiers=(CDataField,))
+@typing_extensions.dataclass_transform()
 def cstruct(
     cls: typing.Optional[type[ctypes.Structure]] = None,
     /,
@@ -222,25 +222,24 @@ def cunion(cls: type[ctypes.Union], /) -> type[ctypes.Union]: ...
 
 @typing_extensions.overload
 def cunion(
-    *, pack: int = 0, align: int = 0, defaults: bool = False, cachens: RefCache = ...
+    *, pack: int = 0, align: int = 0, cachens: RefCache = ...
 ) -> CDataObjectWrapper[ctypes.Union]: ...
 
 
-@typing_extensions.dataclass_transform(field_specifiers=(CDataField,))
+@typing_extensions.dataclass_transform(kw_only_default=True)
 def cunion(
     cls: typing.Optional[type[ctypes.Union]] = None,
     /,
     *,
     pack: int = 0,
     align: int = 0,
-    defaults: bool = False,
     cachens: RefCache = _exactypes_cstruct_cache,
 ) -> typing.Union[type[ctypes.Union], CDataObjectWrapper[ctypes.Union]]:
     return _cdataobj(
         cls,
         pack=pack,
         align=align,
-        defaults=defaults,
+        defaults=False,
         cachens=cachens,
         frame=inspect.currentframe(),
     )
