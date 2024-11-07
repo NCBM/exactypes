@@ -66,6 +66,7 @@ class RefCache(WeakValueDictionary[str, typing.Any]):
             orig._fields_ = tuple(
                 (n, tp, *data) for n, tp, *data in getattr(orig, "_exactypes_unresolved_fields_")
             )
+            delattr(orig, "_exactypes_unresolved_fields_")
         del self._listening[key]
 
     def listen(

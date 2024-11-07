@@ -24,7 +24,6 @@ class A2(ctypes.Structure):
     d: typing.Annotated[c_int, 8]
 
 
-print(A1._exactypes_unresolved_fields_)
 print(A1._fields_)
 print(A2._fields_)
 

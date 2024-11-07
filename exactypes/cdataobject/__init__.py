@@ -182,6 +182,7 @@ def _cdataobj(  # noqa: C901
         and getattr(cls, "_fields_", None) is None
     ):
         cls._fields_ = tuple((n, tp, *data) for n, tp, *data in cls._exactypes_unresolved_fields_)
+        del cls._exactypes_unresolved_fields_
 
     return cls
 
