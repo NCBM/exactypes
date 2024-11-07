@@ -139,7 +139,9 @@ else:
         raise RuntimeError("`WinFunctionType` can only be created on Windows platform.")
 
 
-def _create_pyfunctype(restype_: type[CObjOrPtr], *argtypes_: type[CObjOrPtr]) -> type[_CFuncPtr]:
+def _create_pyfunctype(
+    restype_: type[CObjOrPtr], *argtypes_: type[CObjOrPtr]
+) -> type["CFunctionType"]:
     flags = _FUNCFLAG_CDECL | _FUNCFLAG_PYTHONAPI
     return _create_functype("CFunctionType", restype_, *argtypes_, flags=flags, _cache=None)
 
