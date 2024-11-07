@@ -23,6 +23,12 @@ CDataObjectWrapper: typing_extensions.TypeAlias = typing.Callable[[type[CT]], ty
 StructUnionType: typing_extensions.TypeAlias = typing.Union[
     type[ctypes.Structure], type[ctypes.Union]
 ]
+
+
+class SupportsBool(typing_extensions.Protocol):
+    def __bool__(self) -> bool: ...
+
+
 # SupportsDictOrOp: typing_extensions.TypeAlias = typing.Union[
 #     dict[str, typing.Any], WeakValueDictionary[str, typing.Any]
 # ]

@@ -10,6 +10,7 @@ from ..types import CT as _CT
 from ..types import PT as _PT
 from ..types import CArgObject as _CArgObject
 from ..types import CData as _CData
+from ..types import SupportsBool
 
 py_object = typing.Annotated[typing.Union[_PT, ctypes.py_object], ctypes.py_object]
 c_short = typing.Annotated[typing.Union[int, ctypes.c_short], ctypes.c_short]
@@ -28,7 +29,7 @@ c_byte = typing.Annotated[typing.Union[int, ctypes.c_byte], ctypes.c_byte]
 c_char = typing.Annotated[typing.Union[bytes, ctypes.c_char], ctypes.c_char]
 c_char_p = typing.Annotated[typing.Union[bytes, None, ctypes.c_char_p], ctypes.c_char_p]
 c_void_p = typing.Annotated[typing.Union[int, ctypes.c_void_p], ctypes.c_void_p]
-c_bool = typing.Annotated[typing.Union[bool, ctypes.c_bool], ctypes.c_bool]
+c_bool = typing.Annotated[typing.Union[bool, SupportsBool, ctypes.c_bool], ctypes.c_bool]
 c_wchar_p = typing.Annotated[typing.Union[str, None, ctypes.c_wchar_p], ctypes.c_wchar_p]
 c_wchar = typing.Annotated[typing.Union[str, ctypes.c_wchar], ctypes.c_wchar]
 c_size_t = typing.Annotated[typing.Union[int, ctypes.c_size_t], ctypes.c_size_t]
