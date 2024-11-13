@@ -109,10 +109,10 @@ def _cdataobj(  # noqa: C901
 
     for n, t in (cls.__annotations__ or {}).items():
         _field: list[typing.Any]
-        if typing.get_origin(t) is typing.ClassVar:
-            (t,) = typing.get_args(t)
+        if typing_extensions.get_origin(t) is typing.ClassVar:
+            (t,) = typing_extensions.get_args(t)
         else:
-            assert isinstance(real_fields, list)
+            # assert isinstance(real_fields, list)
             real_fields.append(n)
 
         if isinstance(t, str):
@@ -129,11 +129,11 @@ def _cdataobj(  # noqa: C901
                 if isinstance(t, str):
                     t = eval(t, frame.f_globals, frame.f_locals | dict(cachens))
 
-        if typing.get_origin(t) is typing.ClassVar:
+        if typing_extensions.get_origin(t) is typing.ClassVar:
             (t,) = typing.get_args(t)
             real_fields.remove(n)
 
-        if not isinstance(t, (types.GenericAlias, typing._GenericAlias)):  # type: ignore[attr-defined]  # pyright: ignore[reportAttributeAccessIssue]
+        if typing_extensions.get_origin(t) is None:
             if issubclass(t, (_CData, _PyCPointerType, ctypes.Structure, ctypes.Union)):
                 _field = [n, t]
                 cls._exactypes_unresolved_fields_.append(_field)

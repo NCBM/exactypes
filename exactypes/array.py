@@ -9,20 +9,18 @@ from weakref import WeakValueDictionary
 import typing_extensions
 
 from .exceptions import AnnotationError, ArrayUntyped
-from .types import CT as _CT
 from .types import PT as _PT
-from .types import CData as _CData
-from .types import PyCPointerType, StructUnionType
+from .types import XCT as _XCT
+from .types import CTypes, PyCPointerType
 
 array_content_limits: int = 8
 
 _SCT = typing_extensions.TypeVar("_SCT", bound=ctypes._SimpleCData)
-_SUT = typing_extensions.TypeVar("_SUT", bound=typing.Union[ctypes.Structure, ctypes.Union])
 
 
 def offset_of(
-    cobj: typing.Union["ctypes.Array[_CT]", "PyCPointerType[_CT]"], ofs: int
-) -> "PyCPointerType[_CT]":
+    cobj: typing.Union["ctypes.Array[_XCT]", "PyCPointerType[_XCT]"], ofs: int
+) -> "PyCPointerType[_XCT]":
     tp = cobj._type_
     # return ctypes.POINTER(tp).from_address(ctypes.addressof(cobj) + ofs * ctypes.sizeof(tp))
     ptr = ctypes.cast(cobj, ctypes.c_void_p)
@@ -32,22 +30,26 @@ def offset_of(
     return ctypes.cast(ptr, ctypes.POINTER(tp))
 
 
-_array_type_cache: WeakValueDictionary[type[_CData], type["Array[_CData]"]] = WeakValueDictionary()
+_array_type_cache: WeakValueDictionary[type[CTypes], type["Array[CTypes]"]] = WeakValueDictionary()
 
 
-class Array(MutableSequence[_CT], typing.Generic[_CT]):
-    _base: type[_CT]
-    _type_: type[ctypes.Array[_CT]]
-    _data: ctypes.Array[_CT]
+class Array(MutableSequence[_XCT], typing.Generic[_XCT]):
+    _base: type[_XCT]
+    _type_: type[ctypes.Array[_XCT]]
+    _data: ctypes.Array[_XCT]
     _dynamic: bool
 
-    def __class_getitem__(cls, tp: type[_CT]) -> typing.Union[type["Array"], types.GenericAlias]:
+    @property
+    def _as_parameter_(self) -> "ctypes.Array[_XCT]":
+        return self._data
+
+    def __class_getitem__(cls, tp: type[_XCT]) -> typing.Union[type["Array"], types.GenericAlias]:
         if isinstance(tp, typing.TypeVar) or typing_extensions.get_origin(tp) is not None:
             return types.GenericAlias(cls, tp)
         if hasattr(cls, "_base"):
             raise AnnotationError("typed array should not be annotated again")
         array_type_cache = typing.cast(
-            WeakValueDictionary[type[_CT], type["Array[_CT]"]], _array_type_cache
+            WeakValueDictionary[type[_XCT], type["Array[_XCT]"]], _array_type_cache
         )
         if tp in array_type_cache:
             return array_type_cache[tp]
@@ -56,7 +58,7 @@ class Array(MutableSequence[_CT], typing.Generic[_CT]):
     @typing.overload
     def __init__(
         self,
-        data: typing.Optional[Sequence[_CT]] = None,
+        data: typing.Optional[Iterable[_XCT]] = None,
         *,
         length: int,
         dynamic: typing.Literal[False] = False,
@@ -65,7 +67,7 @@ class Array(MutableSequence[_CT], typing.Generic[_CT]):
     @typing.overload
     def __init__(
         self,
-        data: Sequence[_CT],
+        data: Iterable[_XCT],
         *,
         length: typing.Literal[None] = None,
         dynamic: bool = False,
@@ -82,7 +84,7 @@ class Array(MutableSequence[_CT], typing.Generic[_CT]):
 
     def __init__(
         self,
-        data: typing.Optional[Sequence[_CT]] = None,
+        data: typing.Optional[Iterable[_XCT]] = None,
         *,
         length: typing.Optional[int] = None,
         dynamic: bool = False,
@@ -92,6 +94,8 @@ class Array(MutableSequence[_CT], typing.Generic[_CT]):
                 f"array not typed! use `{self.__class__.__name__}[some_type]` "
                 "to setup a type first."
             )
+        if data is not None and not isinstance(data, Sequence):
+            data = list(data)
         dlen = 0 if data is None else len(data)
         if length is not None and dlen > length:
             raise ValueError(f"too many data! Given {length = } but len(data) = {dlen}")
@@ -115,19 +119,19 @@ class Array(MutableSequence[_CT], typing.Generic[_CT]):
         )
 
     @typing.overload
-    def __getitem__(self, index: int) -> _CT: ...
+    def __getitem__(self, index: int) -> _XCT: ...
 
     @typing.overload
-    def __getitem__(self, index: slice) -> list[_CT]: ...
+    def __getitem__(self, index: slice) -> list[_XCT]: ...
 
-    def __getitem__(self, index: typing.Union[int, slice]) -> typing.Union[_CT, list[_CT]]:
+    def __getitem__(self, index: typing.Union[int, slice]) -> typing.Union[_XCT, list[_XCT]]:
         return self._data[index]
 
     @typing.overload
-    def __setitem__(self, index: int, value: _CT) -> None: ...
+    def __setitem__(self, index: int, value: _XCT) -> None: ...
 
     @typing.overload
-    def __setitem__(self, index: slice, value: Iterable[_CT]) -> None: ...
+    def __setitem__(self, index: slice, value: Iterable[_XCT]) -> None: ...
 
     def __setitem__(self, index, value) -> None:
         if value is self or not isinstance(value, (self._base, int, type(None), Sequence)):
@@ -169,7 +173,7 @@ class Array(MutableSequence[_CT], typing.Generic[_CT]):
         for i in reversed(range(ss, se, st)):
             del self[i]
 
-    def insert(self, index: int, value: _CT) -> None:
+    def insert(self, index: int, value: _XCT) -> None:
         if not self._dynamic:
             raise TypeError(
                 f"{self.__class__.__name__} does not support insertion. "
@@ -183,7 +187,7 @@ class Array(MutableSequence[_CT], typing.Generic[_CT]):
         )
         self[index] = value
 
-    def extend(self, values: Iterable[_CT]) -> None:
+    def extend(self, values: Iterable[_XCT]) -> None:
         if not self._dynamic:
             raise TypeError(
                 f"{self.__class__.__name__} does not support extension. "
@@ -200,10 +204,10 @@ class Array(MutableSequence[_CT], typing.Generic[_CT]):
         self._data = self._type_(*(self._data[:size]))
 
 
-class _CompatArray(Array[_CT], typing.Generic[_CT, _PT]):
+class _CompatArray(Array[_XCT], typing.Generic[_XCT, _PT]):
     @typing_extensions.no_type_check
     def __class_getitem__(
-        cls, tp: tuple[type[_CT], type[_PT]]
+        cls, tp: tuple[type[_XCT], type[_PT]]
     ) -> typing.Union[type["Array"], types.GenericAlias]:
         return super().__class_getitem__(tp[0])
 
@@ -212,7 +216,7 @@ class _CompatArray(Array[_CT], typing.Generic[_CT, _PT]):
         @typing.overload
         def __init__(
             self,
-            data: typing.Optional[Sequence[typing.Union[_CT, _PT]]] = None,
+            data: typing.Optional[Sequence[typing.Union[_XCT, _PT]]] = None,
             *,
             length: int,
             dynamic: typing.Literal[False] = False,
@@ -221,7 +225,7 @@ class _CompatArray(Array[_CT], typing.Generic[_CT, _PT]):
         @typing.overload
         def __init__(
             self,
-            data: Sequence[typing.Union[_CT, _PT]],
+            data: Sequence[typing.Union[_XCT, _PT]],
             *,
             length: typing.Literal[None] = None,
             dynamic: bool = False,
@@ -238,7 +242,7 @@ class _CompatArray(Array[_CT], typing.Generic[_CT, _PT]):
 
         def __init__(
             self,
-            data: typing.Optional[Sequence[typing.Union[_CT, _PT]]] = None,
+            data: typing.Optional[Sequence[typing.Union[_XCT, _PT]]] = None,
             *,
             length: typing.Optional[int] = None,
             dynamic: bool = False,
@@ -260,22 +264,22 @@ class _CompatArray(Array[_CT], typing.Generic[_CT, _PT]):
         def __reversed__(self) -> Iterator[_PT]: ...
 
         @typing.overload
-        def __setitem__(self, index: int, value: typing.Union[_CT, _PT]) -> None: ...
+        def __setitem__(self, index: int, value: typing.Union[_XCT, _PT]) -> None: ...
 
         @typing.overload
-        def __setitem__(self, index: slice, value: Iterable[typing.Union[_CT, _PT]]) -> None: ...
+        def __setitem__(self, index: slice, value: Iterable[typing.Union[_XCT, _PT]]) -> None: ...
 
         def __setitem__(self, index, value) -> None: ...
 
-        def insert(self, index: int, value: typing.Union[_CT, _PT]) -> None: ...
+        def insert(self, index: int, value: typing.Union[_XCT, _PT]) -> None: ...
 
-        def extend(self, values: Iterable[typing.Union[_CT, _PT]]) -> None: ...
+        def extend(self, values: Iterable[typing.Union[_XCT, _PT]]) -> None: ...
 
-        def append(self, value: typing.Union[_CT, _PT]) -> None: ...
+        def append(self, value: typing.Union[_XCT, _PT]) -> None: ...
 
         def remove(self, value: typing.Any) -> None: ...
 
-        def __iadd__(self, values: Iterable[typing.Union[_CT, _PT]]) -> typing_extensions.Self: ...
+        def __iadd__(self, values: Iterable[typing.Union[_XCT, _PT]]) -> typing_extensions.Self: ...
 
 
 py_object_array = _CompatArray[ctypes.py_object, typing.Any]
@@ -527,23 +531,17 @@ def of(tp: type[_SCT]) -> type[Array[_SCT]]: ...
 
 
 @typing.overload
-def of(tp: type[_SUT]) -> type[Array[_SUT]]: ...
+def of(tp: type[_XCT]) -> type[Array[_XCT]]: ...
 
 
-@typing.overload
-def of(tp: type[_CT]) -> type[Array[_CT]]: ...
-
-
-def of(tp: typing.Union[str, type[_CData], StructUnionType]):
+def of(tp: typing.Union[str, type[CTypes]]):
     if isinstance(tp, str):
         from inspect import currentframe
 
         fr = currentframe()
         if fr is not None:
             fr = fr.f_back
-        ctx: dict[str, typing.Union[type[_CData], StructUnionType]] = (
-            fr.f_globals if fr is not None else {}
-        )
+        ctx: dict[str, CTypes] = fr.f_globals if fr is not None else {}
         if tp not in ctx:
             return globals().get(tp + "_array", Array[getattr(ctypes, tp)])
         return globals().get(tp + "_array", Array[getattr(ctypes, tp, ctx[tp])])

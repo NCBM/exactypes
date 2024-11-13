@@ -15,8 +15,11 @@ else:
     CArgObject = type(ctypes.byref(ctypes.c_int()))
     PyCPointerType = type(ctypes.POINTER(ctypes.c_int))
 
+CTypes = typing.Union[CData, ctypes.Structure, ctypes.Union, PyCPointerType]
+
 _CT = CT = typing.TypeVar("_CT", bound=CData)
 _PT = PT = typing.TypeVar("_PT")
+_XCT = XCT = typing.TypeVar("_XCT", bound=CTypes)
 
 CObjOrPtr: typing_extensions.TypeAlias = typing.Union[CData, PyCPointerType]
 CDataObjectWrapper: typing_extensions.TypeAlias = typing.Callable[[type[CT]], type[CT]]
