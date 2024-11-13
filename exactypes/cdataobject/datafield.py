@@ -3,20 +3,27 @@ import ctypes
 import sys
 import typing
 
-from ..types import CT as _CT
+from ..array import Array
 from ..types import PT as _PT
-from ..types import CData as _CData
+from ..types import XCT as _XCT
 
 
-class CDataField(typing.Generic[_PT, _CT]):
-    def __init__(self, ptype: type[_PT], ctype: type[_CT]) -> None:
+class CDataField(typing.Generic[_PT, _XCT]):
+    def __init__(self, ptype: type[_PT], ctype: type[_XCT]) -> None:
         self.ptype = ptype
         self.ctype = ctype
 
-    def __get__(self, obj: _CData, type_: typing.Union[type[_CData], None] = None) -> _PT:  # type: ignore[empty-body]
+    def __get__(self, obj, type_=None) -> _PT:  # type: ignore[empty-body]
         ...
 
-    def __set__(self, obj: _CData, value: typing.Union[_PT, _CT]) -> None: ...
+    def __set__(self, obj, value: typing.Union[_PT, _XCT]) -> None: ...
+
+
+class CArrayField(Array[_XCT], typing.Generic[_PT, _XCT]):
+    def __get__(self, obj, type_=None) -> _PT:  # type: ignore[empty-body]
+        ...
+
+    def __set__(self, obj, value: typing.Union[_PT, ctypes.Array[_XCT]]) -> None: ...
 
 
 def value(default: typing.Any = None) -> typing.Any:
