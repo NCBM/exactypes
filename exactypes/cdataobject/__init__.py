@@ -3,7 +3,7 @@ import inspect
 import sys
 import types
 import typing
-from collections.abc import Callable, Sequence
+from collections.abc import Callable
 from functools import partial, wraps
 
 import typing_extensions
@@ -21,13 +21,6 @@ _CDO_T = typing.TypeVar("_CDO_T", ctypes.Structure, ctypes.Union)
 
 if typing_extensions.TYPE_CHECKING:
     P: typing_extensions.TypeAlias = "ctypes._Pointer[_CT]"
-
-    class _ExactCDOExtra(_CDO_T):  # type: ignore  # incredibly evil hack
-        """Temporary annotation for custom fields, not exist in runtime."""
-
-        _exactypes_unresolved_fields_: list[list]
-        _fields_: Sequence[typing.Union[tuple[str, type[_CData]], tuple[str, type[_CData], int]]]
-        _anonymous_: Sequence[str]
 else:
 
     class P:
@@ -103,9 +96,8 @@ def _cdataobj(  # noqa: C901
     if (frame := frame.f_back) is None:
         raise RuntimeError("cannot get parent context.")
 
-    if typing.TYPE_CHECKING:
-        cls = typing.cast(type[_ExactCDOExtra], cls)  # the hack of _ExactCDOExtra used to solve it.
-    cls._exactypes_unresolved_fields_ = []  # type: ignore
+    setattr(cls, "_exactypes_unresolved_fields_", [])  # noqa: B010
+    # cls._exactypes_unresolved_fields_ = []
 
     for n, t in (cls.__annotations__ or {}).items():
         _field: list[typing.Any]
@@ -122,7 +114,7 @@ def _cdataobj(  # noqa: C901
                 _field = [n, t]
                 for name in unresolved:
                     cachens.listen(name, cls, _field, real_fields, frame.f_globals, frame.f_locals)
-                cls._exactypes_unresolved_fields_.append(_field)
+                getattr(cls, "_exactypes_unresolved_fields_").append(_field)
                 continue
             else:
                 t = eval(t, frame.f_globals, frame.f_locals | dict(cachens))
@@ -136,7 +128,7 @@ def _cdataobj(  # noqa: C901
         if typing_extensions.get_origin(t) is None:
             if issubclass(t, (_CData, _PyCPointerType, ctypes.Structure, ctypes.Union)):
                 _field = [n, t]
-                cls._exactypes_unresolved_fields_.append(_field)
+                getattr(cls, "_exactypes_unresolved_fields_").append(_field)
                 continue
             raise AnnotationError(f"Bad annotation type '{t!s}'.")
 
@@ -147,7 +139,7 @@ def _cdataobj(  # noqa: C901
             raise AnnotationError(f"Bad annotation type '{t!s}'.")
 
         if len(data) == 2:  # *, [CT, int]
-            cls._exactypes_unresolved_fields_.append([n, *data])
+            getattr(cls, "_exactypes_unresolved_fields_").append([n, *data])
             continue
 
         if (_orig := typing_extensions.get_origin(_type)) is not None and issubclass(
@@ -156,11 +148,11 @@ def _cdataobj(  # noqa: C901
             # [CDF[PT, CT], int]
             _, _type = typing.cast(tuple[object, _CData], typing_extensions.get_args(_type))
         elif not isinstance(_type, (str, _CData, _PyCPointerType)):  # PT, [CT]
-            cls._exactypes_unresolved_fields_.append([n, *data])
+            getattr(cls, "_exactypes_unresolved_fields_").append([n, *data])
             continue
 
         _field = [n, _type, *data]
-        cls._exactypes_unresolved_fields_.append(_field)  # CT, [int]
+        getattr(cls, "_exactypes_unresolved_fields_").append(_field)  # CT, [int]
         if isinstance(_type, str):  # str, [int]
             if unresolved := get_unresolved_names(
                 _type, frame.f_globals, frame.f_locals, dict(cachens)
@@ -178,11 +170,15 @@ def _cdataobj(  # noqa: C901
         _replace_init(cls, *real_fields)
 
     if (
-        not any(isinstance(_tp, str) for _, _tp, *_ in cls._exactypes_unresolved_fields_)
+        not any(
+            isinstance(_tp, str) for _, _tp, *_ in getattr(cls, "_exactypes_unresolved_fields_")
+        )
         and getattr(cls, "_fields_", None) is None
     ):
-        cls._fields_ = tuple((n, tp, *data) for n, tp, *data in cls._exactypes_unresolved_fields_)
-        del cls._exactypes_unresolved_fields_
+        cls._fields_ = tuple(
+            (n, tp, *data) for n, tp, *data in getattr(cls, "_exactypes_unresolved_fields_")
+        )
+        delattr(cls, "_exactypes_unresolved_fields_")
 
     return cls
 
