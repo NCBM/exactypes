@@ -98,7 +98,9 @@ class Array(MutableSequence[_XCT], typing.Generic[_XCT]):
             data = list(data)
         dlen = 0 if data is None else len(data)
         if length is not None and dlen > length:
-            raise ValueError(f"too many data! Given {length = } but len(data) = {dlen}")
+            raise ValueError(f"too many data! given {length = } but len(data) = {dlen}")
+        if length is not None and length < 0:
+            raise ValueError("array length cannot be less than 0")
         self._type_ = self._base * (length or dlen)
         self._data = self._type_()
         if data is not None:
@@ -114,7 +116,7 @@ class Array(MutableSequence[_XCT], typing.Generic[_XCT]):
             return f"{clsname}[{self._base}]{tuple(self._data[:])}"
         return (
             f"{clsname}[{self._base}]("
-            + ", ".join(str(x) for x in self._data[:array_content_limits])
+            + ", ".join(repr(x) for x in self._data[:array_content_limits])
             + ", ...)"
         )
 
