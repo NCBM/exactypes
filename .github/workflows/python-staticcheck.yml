@@ -1,4 +1,4 @@
-name: Python Static Check with BasedPyright and ruff
+name: Python Static Check with BasedPyright and Ruff
 
 on:
   push:
