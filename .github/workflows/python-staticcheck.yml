@@ -5,6 +5,7 @@ on:
     paths:
       - '**.py'
       - '**.pyi'
+      - '.github/workflows/python-staticcheck.yml'
 
 jobs:
   type-check:
@@ -27,8 +28,7 @@ jobs:
 
     - name: Install project
       run: |
-        python -m venv .venv
-        .venv/bin/pip install -e .
+        pip install -e .
 
     - name: Run basedpyright
       run: |
