@@ -15,8 +15,6 @@ from .types import CTypes, PyCPointerType
 
 array_content_limits: int = 8
 
-_SCT = typing_extensions.TypeVar("_SCT", bound=ctypes._SimpleCData)
-
 
 def offset_of(
     cobj: typing.Union["ctypes.Array[_XCT]", "PyCPointerType[_XCT]"], ofs: int
@@ -311,6 +309,9 @@ c_uint8_array = _CompatArray[ctypes.c_uint8, int]
 
 if sys.version_info >= (3, 12):
     c_time_t_array = _CompatArray[ctypes.c_time_t, int]
+
+    # no overload for c_time_t since it is actually c_int32 or c_int64.
+
     HAS_TIME_T = True
 else:
     HAS_TIME_T = False
@@ -319,6 +320,21 @@ if sys.version_info >= (3, 14):
     c_float_complex_array = _CompatArray[ctypes.c_float_complex, complex]
     c_double_complex_array = _CompatArray[ctypes.c_double_complex, complex]
     c_longdouble_complex_array = _CompatArray[ctypes.c_longdouble_complex, complex]
+
+    @typing.overload
+    def of(
+        tp: typing.Union[typing.Literal["c_float_complex"], type[ctypes.c_float_complex]],
+    ) -> type[c_float_complex_array]: ...
+
+    @typing.overload
+    def of(
+        tp: typing.Union[typing.Literal["c_double_complex"], type[ctypes.c_double_complex]],
+    ) -> type[c_double_complex_array]: ...
+
+    @typing.overload
+    def of(
+        tp: typing.Union[typing.Literal["c_longdouble_complex"], type[ctypes.c_longdouble_complex]],
+    ) -> type[c_longdouble_complex_array]: ...
 
 HAS_INT16 = HAS_INT32 = HAS_INT64 = False
 with contextlib.suppress(AttributeError):
@@ -498,38 +514,8 @@ def of(
 ) -> type[c_uint8_array]: ...
 
 
-if sys.version_info >= (3, 12):
-
-    @typing.overload
-    def of(
-        tp: typing.Union[typing.Literal["c_time_t"], type[ctypes.c_time_t]],
-    ) -> type[c_time_t_array]: ...
-
-
-if sys.version_info >= (3, 14):
-
-    @typing.overload
-    def of(
-        tp: typing.Union[typing.Literal["c_float_complex"], type[ctypes.c_float_complex]],
-    ) -> type[c_float_complex_array]: ...
-
-    @typing.overload
-    def of(
-        tp: typing.Union[typing.Literal["c_double_complex"], type[ctypes.c_double_complex]],
-    ) -> type[c_double_complex_array]: ...
-
-    @typing.overload
-    def of(
-        tp: typing.Union[typing.Literal["c_longdouble_complex"], type[ctypes.c_longdouble_complex]],
-    ) -> type[c_longdouble_complex_array]: ...
-
-
 @typing.overload
 def of(tp: str) -> type[Array[typing.Any]]: ...
-
-
-@typing.overload
-def of(tp: type[_SCT]) -> type[Array[_SCT]]: ...
 
 
 @typing.overload

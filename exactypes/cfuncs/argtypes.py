@@ -6,11 +6,12 @@ import typing
 
 import typing_extensions
 
-from ..types import CT as _CT
-from ..types import PT as _PT
 from ..types import CArgObject as _CArgObject
 from ..types import CData as _CData
-from ..types import SupportsBool
+from ..types import CTypes, SupportsBool
+
+_XCT = typing.TypeVar("_XCT", bound=CTypes)
+_PT = typing.TypeVar("_PT")
 
 py_object = typing.Annotated[typing.Union[_PT, ctypes.py_object], ctypes.py_object]
 c_short = typing.Annotated[typing.Union[int, ctypes.c_short], ctypes.c_short]
@@ -65,14 +66,14 @@ if sys.version_info >= (3, 14):
     ]
 
 if typing.TYPE_CHECKING:
-    Pointer: typing_extensions.TypeAlias = typing.Union[_ctypes._Pointer[_CT], _CArgObject]
+    Pointer: typing_extensions.TypeAlias = typing.Union[_ctypes._Pointer[_XCT], _CArgObject]
 else:
 
     class Pointer:
-        def __class_getitem__(cls, pt: type[_CT]) -> type["_ctypes._Pointer[_CT]"]:
+        def __class_getitem__(cls, pt: type[_XCT]) -> type["_ctypes._Pointer[_XCT]"]:
             if isinstance(pt, str):
-                return typing.cast(type["_ctypes._Pointer[_CT]"], f"P[{pt!s}]")
-            return typing.cast(type["_ctypes._Pointer[_CT]"], ctypes.POINTER(pt))
+                return typing.cast(type["_ctypes._Pointer[_XCT]"], f"P[{pt!s}]")
+            return typing.cast(type["_ctypes._Pointer[_XCT]"], ctypes.POINTER(pt))
 
 
 VaArgs: typing_extensions.TypeAlias = typing.Union[_CData, Pointer, int, bytes, str, None]

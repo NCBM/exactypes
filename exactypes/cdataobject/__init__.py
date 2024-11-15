@@ -9,32 +9,32 @@ from functools import partial, wraps
 import typing_extensions
 
 from ..exceptions import AnnotationError
-from ..types import CT as _CT
 from ..types import CData as _CData
-from ..types import CDataObjectWrapper, StructUnionType
+from ..types import CDataObjectWrapper, CTypes, StructUnionType
 from ..types import PyCPointerType as _PyCPointerType
 from .datafield import CDataField as CDataField
 from .refsolver import RefCache as RefCache
 from .refsolver import get_unresolved_names
 
 _CDO_T = typing.TypeVar("_CDO_T", ctypes.Structure, ctypes.Union)
+_XCT = typing.TypeVar("_XCT", bound=CTypes)
 
 if typing_extensions.TYPE_CHECKING:
-    P: typing_extensions.TypeAlias = "ctypes._Pointer[_CT]"
+    P: typing_extensions.TypeAlias = "ctypes._Pointer[_XCT]"
 else:
 
     class P:
         def __new__(
-            cls, cobj: typing.Union[_CT, _PyCPointerType, None] = None
-        ) -> "typing.Union[ctypes._Pointer[_CT], None]":
+            cls, cobj: typing.Union[_XCT, _PyCPointerType, None] = None
+        ) -> "typing.Union[ctypes._Pointer[_XCT], None]":
             if cobj is None:
                 return None
             return ctypes.pointer(cobj)  # type: ignore
 
-        def __class_getitem__(cls, pt: type[_CT]) -> type["ctypes._Pointer[_CT]"]:
+        def __class_getitem__(cls, pt: type[_XCT]) -> type["ctypes._Pointer[_XCT]"]:
             if isinstance(pt, str):
-                return typing.cast(type["ctypes._Pointer[_CT]"], f"P[{pt!s}]")
-            return typing.cast(type["ctypes._Pointer[_CT]"], ctypes.POINTER(pt))
+                return typing.cast(type["ctypes._Pointer[_XCT]"], f"P[{pt!s}]")
+            return typing.cast(type["ctypes._Pointer[_XCT]"], ctypes.POINTER(pt))
 
 
 _exactypes_cstruct_cache: RefCache = RefCache()
@@ -87,7 +87,8 @@ def _cdataobj(  # noqa: C901
 
     cls._pack_ = pack
     if sys.version_info >= (3, 13):
-        cls._align_ = align
+        # maybe typeshed do not know this...
+        cls._align_ = align  # pyright: ignore[reportAttributeAccessIssue]
 
     real_fields: list[str] = []
 
@@ -102,12 +103,13 @@ def _cdataobj(  # noqa: C901
     for n, t in (cls.__annotations__ or {}).items():
         _field: list[typing.Any]
         if typing_extensions.get_origin(t) is typing.ClassVar:
+            # ClassVar[XXXXX] or ClassVar["XXXXX"], unwrap
             (t,) = typing_extensions.get_args(t)
         else:
             # assert isinstance(real_fields, list)
             real_fields.append(n)
 
-        if isinstance(t, str):
+        if isinstance(t, str):  # "XXXXX", often from __future__.annotations
             if unresolved := get_unresolved_names(
                 t, frame.f_globals, frame.f_locals, dict(cachens)
             ):
@@ -118,21 +120,22 @@ def _cdataobj(  # noqa: C901
                 continue
             else:
                 t = eval(t, frame.f_globals, frame.f_locals | dict(cachens))
-                if isinstance(t, str):
+                if isinstance(t, str):  # P['XXXXX'] -> "P[XXXXX]"
                     t = eval(t, frame.f_globals, frame.f_locals | dict(cachens))
 
         if typing_extensions.get_origin(t) is typing.ClassVar:
+            # ClassVar[XXXXX] from "ClassVar[XXXXX]"
             (t,) = typing.get_args(t)
             real_fields.remove(n)
 
-        if typing_extensions.get_origin(t) is None:
+        if typing_extensions.get_origin(t) is None:  # non-generic, check whether t is C type
             if issubclass(t, (_CData, _PyCPointerType, ctypes.Structure, ctypes.Union)):
                 _field = [n, t]
                 getattr(cls, "_exactypes_unresolved_fields_").append(_field)
                 continue
             raise AnnotationError(f"Bad annotation type '{t!s}'.")
 
-        _type, *data = typing_extensions.get_args(t)
+        _type, *data = typing_extensions.get_args(t)  # unwrap generic args
         _len = len(data)
 
         if _len < 1 or _len > 2:
@@ -143,7 +146,7 @@ def _cdataobj(  # noqa: C901
             continue
 
         if (_orig := typing_extensions.get_origin(_type)) is not None and issubclass(
-            _orig, CDataField
+            _orig, (CDataField)
         ):
             # [CDF[PT, CT], int]
             _, _type = typing.cast(tuple[object, _CData], typing_extensions.get_args(_type))
