@@ -15,7 +15,8 @@ else:
     CArgObject = type(ctypes.byref(ctypes.c_int()))
     PyCPointerType = type(ctypes.POINTER(ctypes.c_int))
 
-CTypes = typing.Union[CData, ctypes.Structure, ctypes.Union, PyCPointerType]
+CTypes = typing.Union[CData, ctypes.Structure, ctypes.Union, PyCPointerType, ctypes.Array]
+CTYPES = (CData, ctypes.Structure, ctypes.Union, PyCPointerType, ctypes.Array)
 
 _CT = CT = typing.TypeVar("_CT", bound=CData)
 _PT = PT = typing.TypeVar("_PT")
