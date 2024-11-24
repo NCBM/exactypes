@@ -252,10 +252,10 @@ class _CompatArray(Array[_XCT], typing.Generic[_XCT, _PT]):
         def __getitem__(self, index: int) -> _PT: ...
 
         @typing.overload
-        def __getitem__(self, index: slice) -> typing.Union[list[_PT], bytes, str]: ...
+        def __getitem__(self, index: slice) -> list[_PT]: ...
 
         @typing_extensions.no_type_check
-        def __getitem__(self, index) -> typing.Union[_PT, list[_PT], bytes, str]: ...
+        def __getitem__(self, index) -> typing.Union[_PT, list[_PT]]: ...
 
         @typing_extensions.no_type_check
         def __iter__(self) -> Iterator[_PT]: ...
@@ -282,6 +282,78 @@ class _CompatArray(Array[_XCT], typing.Generic[_XCT, _PT]):
         def __iadd__(self, values: Iterable[typing.Union[_XCT, _PT]]) -> typing_extensions.Self: ...
 
 
+class _CompatStrBytesArray(Array[_XCT], typing.Generic[_XCT, _PT]):
+    @typing_extensions.no_type_check
+    def __class_getitem__(
+        cls, tp: tuple[type[_XCT], type[_PT]]
+    ) -> typing.Union[type["Array"], types.GenericAlias]:
+        return super().__class_getitem__(tp[0])
+
+    if typing.TYPE_CHECKING:
+
+        @typing.overload
+        def __init__(
+            self,
+            data: typing.Optional[Sequence[typing.Union[_XCT, _PT]]] = None,
+            *,
+            length: int,
+            dynamic: typing.Literal[False] = False,
+        ) -> None: ...
+
+        @typing.overload
+        def __init__(
+            self,
+            data: Sequence[typing.Union[_XCT, _PT]],
+            *,
+            length: typing.Literal[None] = None,
+            dynamic: bool = False,
+        ) -> None: ...
+
+        @typing.overload
+        def __init__(
+            self,
+            data: typing.Literal[None] = None,
+            *,
+            length: typing.Literal[None] = None,
+            dynamic: typing.Literal[True] = True,
+        ) -> None: ...
+
+        def __init__(
+            self,
+            data: typing.Optional[Sequence[typing.Union[_XCT, _PT]]] = None,
+            *,
+            length: typing.Optional[int] = None,
+            dynamic: bool = False,
+        ) -> None: ...
+
+        @typing_extensions.no_type_check
+        def __getitem__(self, index) -> _PT: ...
+
+        @typing_extensions.no_type_check
+        def __iter__(self) -> Iterator[_PT]: ...
+
+        @typing_extensions.no_type_check
+        def __reversed__(self) -> Iterator[_PT]: ...
+
+        @typing.overload
+        def __setitem__(self, index: int, value: typing.Union[_XCT, _PT]) -> None: ...
+
+        @typing.overload
+        def __setitem__(self, index: slice, value: typing.Union[Iterable[_XCT], _PT]) -> None: ...
+
+        def __setitem__(self, index, value) -> None: ...
+
+        def insert(self, index: int, value: typing.Union[_XCT, _PT]) -> None: ...
+
+        def extend(self, values: typing.Union[Iterable[_XCT], _PT]) -> None: ...
+
+        def append(self, value: typing.Union[_XCT, _PT]) -> None: ...
+
+        def remove(self, value: typing.Any) -> None: ...
+
+        def __iadd__(self, values: typing.Union[Iterable[_XCT], _PT]) -> typing_extensions.Self: ...
+
+
 py_object_array = _CompatArray[ctypes.py_object, typing.Any]
 c_short_array = _CompatArray[ctypes.c_short, int]
 c_ushort_array = _CompatArray[ctypes.c_ushort, int]
@@ -296,12 +368,12 @@ c_longlong_array = _CompatArray[ctypes.c_longlong, int]
 c_ulonglong_array = _CompatArray[ctypes.c_ulonglong, int]
 c_ubyte_array = _CompatArray[ctypes.c_ubyte, int]
 c_byte_array = _CompatArray[ctypes.c_byte, int]
-c_char_array = _CompatArray[ctypes.c_char, bytes]
+c_char_array = _CompatStrBytesArray[ctypes.c_char, bytes]
 c_char_p_array = _CompatArray[ctypes.c_char_p, typing.Optional[bytes]]
 c_void_p_array = _CompatArray[ctypes.c_void_p, typing.Optional[int]]
 c_bool_array = _CompatArray[ctypes.c_bool, bool]
 c_wchar_p_array = _CompatArray[ctypes.c_wchar_p, typing.Optional[str]]
-c_wchar_array = _CompatArray[ctypes.c_wchar, str]
+c_wchar_array = _CompatStrBytesArray[ctypes.c_wchar, str]
 c_size_t_array = _CompatArray[ctypes.c_size_t, int]
 c_ssize_t_array = _CompatArray[ctypes.c_ssize_t, int]
 c_int8_array = _CompatArray[ctypes.c_int8, int]
