@@ -8,8 +8,6 @@ from exactypes.cdataobject.datafield import array_of, value
 
 char10 = typing.Annotated[array_of("c_char"), 10]
 int10 = typing.Annotated[array_of("c_int"), 10]
-# char10 = ctypes.c_byte * 10
-# int10 = ctypes.c_int * 10
 
 
 @cstruct
@@ -20,6 +18,10 @@ class A6(ctypes.Structure):
 
 
 a = A6(b"foo", b"bar")
-print(a.ds1, a.ds2, a.ds3)
+assert a.ds1 == b"foo"
+assert a.ds2 == b"bar"
+assert a.ds3[:] == [0] * 10
 a.ds3[:3] = [1, 2, 3]
-print(a.ds1, a.ds2, a.ds3[:])
+# assert a.ds1 == b"foo"
+# assert a.ds2 == b"bar"
+assert a.ds3[:] == [1, 2, 3, 0, 0, 0, 0, 0, 0, 0]
