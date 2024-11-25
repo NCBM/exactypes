@@ -146,9 +146,11 @@ def _create_pyfunctype(
     return _create_functype("CFunctionType", restype_, *argtypes_, flags=flags, _cache=None)
 
 
-def _digest_annotated_types(*types_: type) -> tuple[type[CObjOrPtr], ...]:
+def _digest_annotated_types(
+    *types_: type, target_name: str, key_name: typing.Optional[str] = None
+) -> tuple[type[CObjOrPtr], ...]:
     res: list[type[CObjOrPtr]] = []
-    for tp in types_:
+    for i, tp in enumerate(types_):
         if isinstance(tp, (types.GenericAlias, typing._GenericAlias)):  # type: ignore[attr-defined]  # pyright: ignore[reportAttributeAccessIssue]
             _, tp = typing.cast(tuple[typing.Any, type], typing_extensions.get_args(tp))
 
@@ -157,7 +159,11 @@ def _digest_annotated_types(*types_: type) -> tuple[type[CObjOrPtr], ...]:
             continue
 
         if not issubclass(tp, (_CData, _PyCPointerType)):
-            raise AnnotationError(f"Bad annotation type '{tp!s}'.")
+            raise AnnotationError(
+                f"Bad annotation type '{tp!s}'.",
+                target_name,
+                key_name if key_name is not None else f"<parameter[{i}]>",
+            )
 
         res.append(tp)
     return tuple(res)
@@ -220,8 +226,12 @@ else:
 
         def __class_getitem__(cls, args: tuple[Sequence[type], type]) -> type[_CFuncPtr]:
             atypes, rtype = args
-            atypes = _digest_annotated_types(*atypes)
-            (rtype,) = _digest_annotated_types(rtype)
+            atypes = _digest_annotated_types(*atypes, target_name=cls.__name__)
+            (rtype,) = _digest_annotated_types(
+                rtype,
+                target_name=cls.__name__,
+                key_name="<return-type>",
+            )
             return _create_cfunctype(rtype, *atypes)
 
         def __call__(self, *args: _PS.args, **kwds: _PS.kwargs) -> _PT: ...
@@ -277,14 +287,17 @@ class CCallWrapper(typing.Generic[_PS, _PT]):
                 *(
                     (eval(x, _env.f_globals, _env.f_locals) if isinstance(x, str) else x)
                     for x in _argtypes
-                )
+                ),
+                target_name=self.fnname,
             )
             self.argtypes = argtypes
 
             (_restype,) = _digest_annotated_types(
                 eval(_restype, _env.f_globals, _env.f_locals)
                 if isinstance(_restype, str)
-                else _restype
+                else _restype,
+                target_name=self.fnname,
+                key_name="<return-type>",
             )
         else:
             self.argtypes = _argtypes

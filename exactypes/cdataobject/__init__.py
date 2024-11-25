@@ -102,17 +102,19 @@ def _unwrap_classvar(
     return tp
 
 
-def _resolve_annotated_field(tp: typing.Any):  # noqa: C901
+def _resolve_annotated_field(cls, name, tp: typing.Any):  # noqa: C901
     args = typing_extensions.get_args(tp)  # unwrap generic args
     if len(args) == 3:  # [*, CT, int]
         _, _type, extra = typing.cast(tuple[typing.Any, type[CTypes], int], args)
         if not isinstance(extra, int):
             raise AnnotationError(
-                f"The second annotation metadata must be an int, not {type(extra)}."
+                f"The second annotation metadata must be an int, not {type(extra)}.",
+                cls.__name__,
+                name,
             )
         return _type, extra
     elif len(args) != 2:
-        raise AnnotationError(f"Bad annotation type '{tp!s}'.")
+        raise AnnotationError(f"Bad annotation type '{tp!s}'.", cls.__name__, name)
 
     ptype_or_ctype, ctype_or_extra = args
 
@@ -125,10 +127,12 @@ def _resolve_annotated_field(tp: typing.Any):  # noqa: C901
     origin = typing_extensions.get_origin(_type)
     if origin is None:  # CT?, int
         if not issubclass(_type, CTYPES):
-            raise AnnotationError(f"Bad annotation type '{tp!s}'.")
+            raise AnnotationError(f"Bad annotation type '{tp!s}'.", cls.__name__, name)
         if issubclass(_type, ctypes.Array):
             raise AnnotationError(
-                "Cannot apply int metadata on a untyped array or a typed and sized array."
+                "Cannot apply int metadata on a untyped array or a typed and sized array.",
+                cls.__name__,
+                name,
             )
         return _type, extra
 
@@ -169,15 +173,15 @@ def _resolve_field(  # noqa: C901
             _field = [name, tp]
             getattr(cls, "_exactypes_unresolved_fields_").append(_field)
             return
-        raise AnnotationError(f"Bad annotation type '{tp!s}'.")
+        raise AnnotationError(f"Bad annotation type '{tp!s}'.", cls.__name__, name)
 
     if origin is ctypes.Array or origin is CArrayField:  # Array[CT] / CArrayField
-        raise AnnotationError("Cannot use array type without length.")
+        raise AnnotationError("Cannot use array type without length.", cls.__name__, name)
 
     if origin is CDataField:  # CDF[PT, CT]
         _type = typing_extensions.get_args(tp)[1]
 
-    _type, extra = _resolve_annotated_field(tp)
+    _type, extra = _resolve_annotated_field(cls, name, tp)
 
     if extra is None:
         _field = [name, _type]

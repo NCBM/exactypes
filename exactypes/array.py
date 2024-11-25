@@ -45,7 +45,9 @@ class Array(MutableSequence[_XCT], typing.Generic[_XCT]):
         if isinstance(tp, typing.TypeVar) or typing_extensions.get_origin(tp) is not None:
             return types.GenericAlias(cls, tp)
         if hasattr(cls, "_base"):
-            raise AnnotationError("typed array should not be annotated again")
+            raise AnnotationError(
+                "typed array should not be annotated again", cls.__name__, tp.__qualname__
+            )
         array_type_cache = typing.cast(
             WeakValueDictionary[type[_XCT], type["Array[_XCT]"]], _array_type_cache
         )
@@ -407,6 +409,7 @@ if sys.version_info >= (3, 14):
     def of(
         tp: typing.Union[typing.Literal["c_longdouble_complex"], type[ctypes.c_longdouble_complex]],
     ) -> type[c_longdouble_complex_array]: ...
+
 
 HAS_INT16 = HAS_INT32 = HAS_INT64 = False
 with contextlib.suppress(AttributeError):
