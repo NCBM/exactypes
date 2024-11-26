@@ -12,7 +12,7 @@ from ..exceptions import AnnotationError
 from ..types import CTYPES, CDataObjectWrapper, CTypes, StructUnionType
 from ..types import CData as _CData
 from ..types import PyCPointerType as _PyCPointerType
-from .datafield import CArrayField
+from .datafield import CArrayField, CFlexibleArray
 from .datafield import CDataField as CDataField
 from .refsolver import RefCache as RefCache
 from .refsolver import get_unresolved_names
@@ -180,6 +180,11 @@ def _resolve_field(  # noqa: C901
 
     if origin is CDataField:  # CDF[PT, CT]
         _type = typing_extensions.get_args(tp)[1]
+
+    if origin is CFlexibleArray:
+        etype = typing.cast(type[CTypes], typing_extensions.get_args(tp)[0])
+        setattr(cls, name, CFlexibleArray(etype))
+        return
 
     _type, extra = _resolve_annotated_field(cls, name, tp)
 

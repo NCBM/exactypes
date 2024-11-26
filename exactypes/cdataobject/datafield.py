@@ -3,9 +3,11 @@ import ctypes
 import sys
 import typing
 
+from exactypes.array import offset_of
+
 from ..types import PT as _PT
 from ..types import XCT as _XCT
-from ..types import CTypes
+from ..types import CTypes, PyCPointerType
 
 
 class CDataField(typing.Generic[_PT, _XCT]):
@@ -24,6 +26,16 @@ class CArrayField(CDataField[_PT, ctypes.Array[_XCT]], typing.Generic[_PT, _XCT]
         ...
 
     def __set__(self, obj, value: typing.Union[_PT, ctypes.Array[_XCT]]) -> None: ...
+
+
+class CFlexibleArray(typing.Generic[_XCT]):
+    def __init__(self, typ: type[_XCT]) -> None:
+        self.type_ = typ
+
+    def __get__(
+        self, obj: typing.Union[ctypes.Structure, ctypes.Union], type_=None
+    ) -> "PyCPointerType[_XCT]":
+        return offset_of(ctypes.pointer(obj), 1, self.type_)
 
 
 def value(default: typing.Any = None) -> typing.Any:

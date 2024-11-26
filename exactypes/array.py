@@ -10,22 +10,45 @@ import typing_extensions
 
 from .exceptions import AnnotationError, ArrayUntyped
 from .types import PT as _PT
-from .types import XCT as _XCT
 from .types import CTypes, PyCPointerType
+
+_XCT = typing.TypeVar("_XCT", bound=CTypes)
+_XCT2 = typing.TypeVar("_XCT2", bound=CTypes)
 
 array_content_limits: int = 8
 
 
+@typing_extensions.overload
 def offset_of(
-    cobj: typing.Union["ctypes.Array[_XCT]", "PyCPointerType[_XCT]"], ofs: int
+    cobj: typing.Union["ctypes.Array[_XCT]", "PyCPointerType[_XCT]"],
+    ofs: int,
+    asptrtype: typing.Literal[None] = None,
 ) -> "PyCPointerType[_XCT]":
+    ...
+
+
+@typing_extensions.overload
+def offset_of(
+    cobj: typing.Union["ctypes.Array[_XCT]", "PyCPointerType[_XCT]"],
+    ofs: int,
+    asptrtype: type[_XCT2],
+) -> "PyCPointerType[_XCT2]":
+    ...
+
+
+def offset_of(
+    cobj: typing.Union["ctypes.Array[_XCT]", "PyCPointerType[_XCT]"],
+    ofs: int,
+    asptrtype: typing.Optional[type[_XCT2]] = None,
+) -> "PyCPointerType[_XCT] | PyCPointerType[_XCT2]":
     tp = cobj._type_
-    # return ctypes.POINTER(tp).from_address(ctypes.addressof(cobj) + ofs * ctypes.sizeof(tp))
     ptr = ctypes.cast(cobj, ctypes.c_void_p)
     if ptr.value is None:
         raise ValueError("cannot get an offset of null pointer")
     ptr.value += ofs * ctypes.sizeof(tp)
-    return ctypes.cast(ptr, ctypes.POINTER(tp))
+    if asptrtype is None:
+        return ctypes.cast(ptr, ctypes.POINTER(tp))
+    return ctypes.cast(ptr, ctypes.POINTER(asptrtype))
 
 
 _array_type_cache: WeakValueDictionary[type[CTypes], type["Array[CTypes]"]] = WeakValueDictionary()
