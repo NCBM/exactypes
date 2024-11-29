@@ -13,7 +13,7 @@ from .types import PT as _PT
 from .types import CTypes, PyCPointerType
 
 if typing.TYPE_CHECKING:
-    from collections.abc import Iterator
+    from collections.abc import Iterator  # noqa: F401, RUF100
 
 _XCT = typing.TypeVar("_XCT", bound=CTypes)
 _XCT2 = typing.TypeVar("_XCT2", bound=CTypes)
