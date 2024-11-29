@@ -1,3 +1,7 @@
+"""
+Specially annotated types used in cdataobject (Structure/Union) field annotations.
+"""
+
 import contextlib
 import ctypes
 import sys
@@ -11,6 +15,12 @@ from ..types import CTypes, PyCPointerType
 
 
 class CDataField(typing.Generic[_PT, _XCT]):
+    """
+    A symbol to store typed generic data with auto-conversion.
+    Only benefits static type checkers by using descriptor methods.
+
+    >>> CDataField[AutoConvertedPythonType, CType]
+    """
     def __init__(self, ptype: type[_PT], ctype: type[_XCT]) -> None:
         self.ptype = ptype
         self.ctype = ctype
@@ -22,6 +32,7 @@ class CDataField(typing.Generic[_PT, _XCT]):
 
 
 class CArrayField(CDataField[_PT, ctypes.Array[_XCT]], typing.Generic[_PT, _XCT]):
+    """Similar to `CDataField`, but for C array types."""
     def __get__(self, obj, type_=None) -> _PT:  # type: ignore[empty-body]
         ...
 
@@ -29,6 +40,9 @@ class CArrayField(CDataField[_PT, ctypes.Array[_XCT]], typing.Generic[_PT, _XCT]
 
 
 class CFlexibleArray(typing.Generic[_XCT]):
+    """
+    A real descriptor to help access C flexible array member.
+    """
     def __init__(self, typ: type[_XCT]) -> None:
         self.type_ = typ
 
@@ -39,6 +53,10 @@ class CFlexibleArray(typing.Generic[_XCT]):
 
 
 def value(default: typing.Any = None) -> typing.Any:
+    """
+    Stub value, used when you do not use .pyi stub (in which you can simply write `...` instead of
+    this).
+    """
     return default
 
 
@@ -302,6 +320,12 @@ def array_of(
 
 
 def array_of(tp):
+    """
+    A shortcut to get specific array type for given type or name.
+
+    :param tp: Type or name of the type to get array for.
+    :return: Array type or CArrayField for given type or name, without array size.
+    """
     if isinstance(tp, str):
         from inspect import currentframe
 

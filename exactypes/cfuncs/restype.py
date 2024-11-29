@@ -1,3 +1,7 @@
+"""
+Specially annotated types used in return value annotations.
+"""
+
 import contextlib
 import ctypes
 import sys

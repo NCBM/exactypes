@@ -1,3 +1,7 @@
+"""
+Specially annotated types used in parameter annotations.
+"""
+
 import _ctypes
 import contextlib
 import ctypes
@@ -77,3 +81,4 @@ else:
 
 
 VaArgs: typing_extensions.TypeAlias = typing.Union[_CData, Pointer, int, bytes, str, None]
+"""C `...` va_args marker."""

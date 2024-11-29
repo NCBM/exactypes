@@ -282,6 +282,19 @@ def cstruct(
     defaults: bool = False,
     cachens: RefCache = _exactypes_cstruct_cache,
 ) -> typing.Union[type[ctypes.Structure], CDataObjectWrapper[ctypes.Structure]]:
+    """
+    A decorator to resolve annotated fields of a ctypes structure class.
+
+    :param cls: The struct class to be wrapped.
+
+    :param pack: The alignment of the struct.
+
+    :param align: The alignment of the struct.
+
+    :param defaults: Whether to use default values for unresolved fields.
+
+    :param cachens: The cache for the type.
+    """
     return _cdataobj(
         cls,
         pack=pack,
@@ -311,6 +324,17 @@ def cunion(
     align: int = 0,
     cachens: RefCache = _exactypes_cstruct_cache,
 ) -> typing.Union[type[ctypes.Union], CDataObjectWrapper[ctypes.Union]]:
+    """
+    A decorator to resolve annotated fields of a ctypes union class.
+
+    :param cls: The union class to be wrapped.
+
+    :param pack: The alignment of the struct.
+
+    :param align: The alignment of the struct.
+
+    :param cachens: The cache for the type.
+    """
     return _cdataobj(
         cls,
         pack=pack,

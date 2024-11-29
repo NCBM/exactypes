@@ -15,6 +15,10 @@ from ..types import StructUnionType
 
 
 def get_unresolved_names(type_str: str, *namespaces: dict[str, Any]) -> set[str]:
+    """
+    Get the unresolved names from a type string.
+    """
+
     names: set[str] = set()
     namespace: dict[str, Any] = reduce(or_, namespaces)
 
@@ -33,6 +37,10 @@ def get_unresolved_names(type_str: str, *namespaces: dict[str, Any]) -> set[str]
 
 
 class RefCache(WeakValueDictionary[str, typing.Any]):
+    """
+    A weakref cache for resolving types.
+    """
+
     _listening: dict[str, tuple[list, StructUnionType, tuple[dict[str, Any], ...], list[str]]]
 
     @typing_extensions.override

@@ -41,6 +41,17 @@ def offset_of(
     ofs: int,
     asptrtype: typing.Optional[type[_XCT2]] = None,
 ) -> "PyCPointerType[_XCT] | PyCPointerType[_XCT2]":
+    """
+    Apply offset on given array or pointer.
+
+    :param cobj: An array or a pointer for applying offset.
+
+    :param ofs: N offset to skip `N * sizeof(_XCT /* a.k.a cobj._type_ */)`.
+
+    :param asptrtype: Pointer type to be returned, same with `_XCT` if not given.
+
+    :return: A new pointer based on the offset.
+    """
     tp = cobj._type_
     ptr = ctypes.cast(cobj, ctypes.c_void_p)
     if ptr.value is None:
@@ -55,6 +66,7 @@ _array_type_cache: WeakValueDictionary[type[CTypes], type["Array[CTypes]"]] = We
 
 
 class Array(MutableSequence[_XCT], typing.Generic[_XCT]):
+    """Supplement array type with various dynamic features (MAYBE SLOW!)"""
     _base: type[_XCT]
     _type_: type[ctypes.Array[_XCT]]
     _data: ctypes.Array[_XCT]
@@ -230,6 +242,7 @@ class Array(MutableSequence[_XCT], typing.Generic[_XCT]):
 
 
 class _CompatArray(Array[_XCT], typing.Generic[_XCT, _PT]):
+    """Type symbol to contain auto-converted Python types."""
     @typing_extensions.no_type_check
     def __class_getitem__(
         cls, tp: tuple[type[_XCT], type[_PT]]
@@ -308,6 +321,7 @@ class _CompatArray(Array[_XCT], typing.Generic[_XCT, _PT]):
 
 
 class _CompatStrBytesArray(Array[_XCT], typing.Generic[_XCT, _PT]):
+    """Type symbol to contain auto-converted Python str/bytes types."""
     @typing_extensions.no_type_check
     def __class_getitem__(
         cls, tp: tuple[type[_XCT], type[_PT]]
@@ -621,6 +635,12 @@ def of(tp: type[_XCT]) -> type[Array[_XCT]]: ...
 
 
 def of(tp: typing.Union[str, type[CTypes]]):
+    """
+    A shortcut to get specific supplement array type for given type or name.
+
+    :param tp: Type or name of the type to get array for.
+    :return: Supplemented array type for given type or name, without array size.
+    """
     if isinstance(tp, str):
         from inspect import currentframe
 

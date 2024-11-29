@@ -178,6 +178,13 @@ if typing.TYPE_CHECKING:
     ]
 
     class CFnType(_CFuncPtr, typing.Generic[_PS, _PT]):
+        """
+        Wrapper for `CFUNCTYPE`.
+
+        Create a CFunctionType with:
+
+        >>> CFnType[[argtype1, argtype2, ...], restype]
+        """
         _restype_: typing.Union[type[_CData], Callable[[int], typing.Any], None]
         _argtypes_: Sequence[type[_CData]]
         errcheck: _ECT
@@ -215,6 +222,13 @@ if typing.TYPE_CHECKING:
 else:
 
     class CFnType(typing.Generic[_PS, _PT]):
+        """
+        Wrapper for `CFUNCTYPE`.
+
+        Create a CFunctionType with:
+
+        >>> CFnType[[argtype1, argtype2, ...], restype]
+        """
         def __new__(
             cls, rtype, *atypes, use_errno: bool = False, use_last_error: bool = True
         ) -> type[_CFuncPtr]:
@@ -238,6 +252,12 @@ else:
 
 
 class CCallWrapper(typing.Generic[_PS, _PT]):
+    """
+    A wrapper for python callables annotated with ctypes types.
+
+    This class is used to wrap C functions with python functions annotated with ctypes types.
+    The wrapped callable can be called as if it were a normal python function.
+    """
     dll: ctypes.CDLL
     fnname: str
     argtypes: Sequence[type[CObjOrPtr]]
@@ -316,11 +336,24 @@ class CCallWrapper(typing.Generic[_PS, _PT]):
 
 
 def ccall(lib: ctypes.CDLL, *, override_name: typing.Optional[str] = None):
+    """
+    Decorator for wrapping a ctypes function.
+
+    :param lib: The ctypes library including the function you want to wrap.
+
+    :param override_name: Override the name of the wrapped function. If `None`, use the decorated \
+                          function's name.
+    """
     frame = inspect.currentframe()
     if frame is not None:
         frame = frame.f_back
 
     def _ccall(fn: Callable[_PS, _PT]) -> CCallWrapper[_PS, _PT]:
+        """
+        Wrap a python function.
+
+        :param fn: The function to wrap.
+        """
         if override_name is not None:
             fn.__name__ = override_name
         return CCallWrapper(lib, fn, frame)
