@@ -3,7 +3,7 @@ import ctypes
 import sys
 import types
 import typing
-from collections.abc import Iterable, Iterator, MutableSequence, Sequence
+from collections.abc import Iterable, MutableSequence, Sequence
 from weakref import WeakValueDictionary
 
 import typing_extensions
@@ -11,6 +11,9 @@ import typing_extensions
 from .exceptions import AnnotationError, ArrayUntyped
 from .types import PT as _PT
 from .types import CTypes, PyCPointerType
+
+if typing.TYPE_CHECKING:
+    from collections.abc import Iterator
 
 _XCT = typing.TypeVar("_XCT", bound=CTypes)
 _XCT2 = typing.TypeVar("_XCT2", bound=CTypes)
@@ -296,10 +299,10 @@ class _CompatArray(Array[_XCT], typing.Generic[_XCT, _PT]):
         def __getitem__(self, index) -> typing.Union[_PT, list[_PT]]: ...
 
         @typing_extensions.no_type_check
-        def __iter__(self) -> Iterator[_PT]: ...
+        def __iter__(self) -> "Iterator[_PT]": ...
 
         @typing_extensions.no_type_check
-        def __reversed__(self) -> Iterator[_PT]: ...
+        def __reversed__(self) -> "Iterator[_PT]": ...
 
         @typing.overload
         def __setitem__(self, index: int, value: typing.Union[_XCT, _PT]) -> None: ...
@@ -369,10 +372,10 @@ class _CompatStrBytesArray(Array[_XCT], typing.Generic[_XCT, _PT]):
         def __getitem__(self, index) -> _PT: ...
 
         @typing_extensions.no_type_check
-        def __iter__(self) -> Iterator[_PT]: ...
+        def __iter__(self) -> "Iterator[_PT]": ...
 
         @typing_extensions.no_type_check
-        def __reversed__(self) -> Iterator[_PT]: ...
+        def __reversed__(self) -> "Iterator[_PT]": ...
 
         @typing.overload
         def __setitem__(self, index: int, value: typing.Union[_XCT, _PT]) -> None: ...
