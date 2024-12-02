@@ -2,7 +2,6 @@
 Specially annotated types used in parameter annotations.
 """
 
-import _ctypes
 import contextlib
 import ctypes
 import sys
@@ -70,6 +69,7 @@ if sys.version_info >= (3, 14):
     ]
 
 if typing.TYPE_CHECKING:
+    import _ctypes
     Pointer: typing_extensions.TypeAlias = typing.Union[_ctypes._Pointer[_XCT], _CArgObject]
 else:
 

@@ -3,7 +3,6 @@ import inspect
 import sys
 import types
 import typing
-from collections.abc import Callable
 from functools import partial, wraps
 
 import typing_extensions
@@ -21,6 +20,7 @@ _CDO_T = typing.TypeVar("_CDO_T", ctypes.Structure, ctypes.Union)
 _XCT = typing.TypeVar("_XCT", bound=CTypes)
 
 if typing_extensions.TYPE_CHECKING:
+    from collections.abc import Callable
     P: typing_extensions.TypeAlias = "ctypes._Pointer[_XCT]"
 else:
 

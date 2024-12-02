@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import ctypes
+import ctypes  # noqa: TC003  # actual type is required
 
 from test_utils import assert_error, libc
 
