@@ -12,7 +12,7 @@ int10 = typing.Annotated[array_of("c_int"), 10]
 
 @cstruct
 class A6(ctypes.Structure):
-    ds1: char10
+    ds1: ctypes.c_char * 10  # pyright: ignore[reportInvalidTypeForm]
     ds2: char10
     ds3: int10 = value()
 
