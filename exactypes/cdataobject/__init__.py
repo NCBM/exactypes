@@ -8,8 +8,7 @@ from functools import partial, wraps
 import typing_extensions
 
 from ..exceptions import AnnotationError
-from ..types import CTYPES, CDataObjectWrapper, CTypes, StructUnionType
-from ..types import CData as _CData
+from ..types import CDATATYPE, CTYPES, CDataObjectWrapper, CDataType, CTypes, StructUnionType
 from ..types import PyCPointerType as _PyCPointerType
 from .datafield import CArrayField, CFlexibleArray
 from .datafield import CDataField as CDataField
@@ -137,15 +136,15 @@ def _resolve_annotated_field(cls, name, tp: typing.Any):  # noqa: C901
         return _type, extra
 
     if origin is ctypes.Array:  # Array[CT], int
-        etype = typing.cast(type[CTypes], typing_extensions.get_args(_type)[0])
+        etype = typing.cast(type[CDataType], typing_extensions.get_args(_type)[0])
         return etype * extra, None
 
     if origin is CDataField:  # CDF[PT, CT], int
-        _type = typing.cast(type[CTypes], typing_extensions.get_args(_type)[1])
+        _type = typing.cast(type[CDataType], typing_extensions.get_args(_type)[1])
         return _type, extra
 
     if origin is CArrayField:  # CAF[PT, CT], int
-        etype = typing.cast(type[CTypes], typing_extensions.get_args(_type)[1])
+        etype = typing.cast(type[CDataType], typing_extensions.get_args(_type)[1])
         return etype * extra, None
 
     return _type, extra
@@ -169,7 +168,7 @@ def _resolve_field(  # noqa: C901
     origin = typing_extensions.get_origin(tp)
 
     if origin is None:  # non-generic, check whether tp is C type
-        if issubclass(tp, (_CData, _PyCPointerType, ctypes.Structure, ctypes.Union, ctypes.Array)):
+        if issubclass(tp, CDATATYPE):
             _field = [name, tp]
             getattr(cls, "_exactypes_unresolved_fields_").append(_field)
             return
@@ -182,7 +181,7 @@ def _resolve_field(  # noqa: C901
         _type = typing_extensions.get_args(tp)[1]
 
     if origin is CFlexibleArray:
-        etype = typing.cast(type[CTypes], typing_extensions.get_args(tp)[0])
+        etype = typing.cast(type[CDataType], typing_extensions.get_args(tp)[0])
         setattr(cls, name, CFlexibleArray(etype))
         return
 

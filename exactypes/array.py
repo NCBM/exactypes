@@ -10,13 +10,13 @@ import typing_extensions
 
 from .exceptions import AnnotationError, ArrayUntyped
 from .types import PT as _PT
-from .types import CTypes, PyCPointerType
+from .types import CDataType, PyCPointerType
 
 if typing.TYPE_CHECKING:
     from collections.abc import Iterator  # noqa: F401, RUF100
 
-_XCT = typing.TypeVar("_XCT", bound=CTypes)
-_XCT2 = typing.TypeVar("_XCT2", bound=CTypes)
+_XCT = typing.TypeVar("_XCT", bound=CDataType)
+_XCT2 = typing.TypeVar("_XCT2", bound=CDataType)
 
 array_content_limits: int = 8
 
@@ -65,7 +65,7 @@ def offset_of(
     return ctypes.cast(ptr, ctypes.POINTER(asptrtype))
 
 
-_array_type_cache: WeakValueDictionary[type[CTypes], type["Array[CTypes]"]] = WeakValueDictionary()
+_array_type_cache: WeakValueDictionary[type[CDataType], type["Array[CDataType]"]] = WeakValueDictionary()
 
 
 class Array(MutableSequence[_XCT], typing.Generic[_XCT]):
@@ -637,7 +637,7 @@ def of(tp: str) -> type[Array[typing.Any]]: ...
 def of(tp: type[_XCT]) -> type[Array[_XCT]]: ...
 
 
-def of(tp: typing.Union[str, type[CTypes]]):
+def of(tp: typing.Union[str, type[CDataType]]):
     """
     A shortcut to get specific supplement array type for given type or name.
 
@@ -650,7 +650,7 @@ def of(tp: typing.Union[str, type[CTypes]]):
         fr = currentframe()
         if fr is not None:
             fr = fr.f_back
-        ctx: dict[str, CTypes] = fr.f_globals if fr is not None else {}
+        ctx: dict[str, CDataType] = fr.f_globals if fr is not None else {}
         if tp not in ctx:
             return globals().get(tp + "_array", Array[getattr(ctypes, tp)])
         return globals().get(tp + "_array", Array[getattr(ctypes, tp, ctx[tp])])

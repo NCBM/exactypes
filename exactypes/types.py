@@ -32,12 +32,20 @@ CDataType: typing_extensions.TypeAlias = typing.Union[
     ctypes.Structure,
     "ctypes.Array[typing.Any]",
 ]
+CDATATYPE = (
+    ctypes._SimpleCData,
+    PyCPointerType,
+    _ctypes.CFuncPtr,
+    ctypes.Union,
+    ctypes.Structure,
+    ctypes.Array,
+)
 
 _CT = CT = typing.TypeVar("_CT", bound=CData)
 _PT = PT = typing.TypeVar("_PT")
-_XCT = XCT = typing.TypeVar("_XCT", bound=CTypes)
+_XCT = XCT = typing.TypeVar("_XCT", bound=CDataType)
 
-CObjOrPtr: typing_extensions.TypeAlias = typing.Union[CData, PyCPointerType]
+# CObjOrPtr: typing_extensions.TypeAlias = typing.Union[CData, PyCPointerType]
 CDataObjectWrapper: typing_extensions.TypeAlias = typing.Callable[[type[CT]], type[CT]]
 StructUnionType: typing_extensions.TypeAlias = typing.Union[
     type[ctypes.Structure], type[ctypes.Union]

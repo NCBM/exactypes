@@ -19,7 +19,7 @@ import typing_extensions
 from ..exceptions import AnnotationError
 
 # from ..types import CT as _CT
-from ..types import CTYPES, CDataType, CObjOrPtr
+from ..types import CTYPES, CDataType
 from ..types import PT as _PT
 from ..types import CData as _CData
 from . import argtypes as argtypes
@@ -45,11 +45,11 @@ _FunctionType: typing_extensions.TypeAlias = typing.Union[
 @typing_extensions.overload
 def _create_functype(
     name: typing_extensions.Literal["CFunctionType"],
-    restype_: type[CObjOrPtr],
-    *argtypes_: type[CObjOrPtr],
+    restype_: type[CDataType],
+    *argtypes_: type[CDataType],
     flags: int,
     _cache: typing.Optional[
-        dict[tuple[type[CObjOrPtr], tuple[type[CObjOrPtr], ...], int], type["CFunctionType"]]
+        dict[tuple[type[CDataType], tuple[type[CDataType], ...], int], type["CFunctionType"]]
     ],
 ) -> type["CFunctionType"]: ...
 
@@ -57,23 +57,23 @@ def _create_functype(
 @typing_extensions.overload
 def _create_functype(
     name: typing_extensions.Literal["WinFunctionType"],
-    restype_: type[CObjOrPtr],
-    *argtypes_: type[CObjOrPtr],
+    restype_: type[CDataType],
+    *argtypes_: type[CDataType],
     flags: int,
     _cache: typing.Optional[
-        dict[tuple[type[CObjOrPtr], tuple[type[CObjOrPtr], ...], int], type["WinFunctionType"]]
+        dict[tuple[type[CDataType], tuple[type[CDataType], ...], int], type["WinFunctionType"]]
     ],
 ) -> type["WinFunctionType"]: ...
 
 
 def _create_functype(
     name: typing_extensions.Literal["CFunctionType", "WinFunctionType"],
-    restype_: type[CObjOrPtr],
-    *argtypes_: type[CObjOrPtr],
+    restype_: type[CDataType],
+    *argtypes_: type[CDataType],
     flags: int,
     _cache: typing.Union[
-        dict[tuple[type[CObjOrPtr], tuple[type[CObjOrPtr], ...], int], type["CFunctionType"]],
-        dict[tuple[type[CObjOrPtr], tuple[type[CObjOrPtr], ...], int], type["WinFunctionType"]],
+        dict[tuple[type[CDataType], tuple[type[CDataType], ...], int], type["CFunctionType"]],
+        dict[tuple[type[CDataType], tuple[type[CDataType], ...], int], type["WinFunctionType"]],
         None,
     ],
 ) -> _FunctionType:
@@ -88,8 +88,8 @@ def _create_functype(
 
 
 def _create_cfunctype(
-    restype_: type[CObjOrPtr],
-    *argtypes_: type[CObjOrPtr],
+    restype_: type[CDataType],
+    *argtypes_: type[CDataType],
     use_errno: bool = False,
     use_last_error: bool = False,
 ) -> type["CFunctionType"]:
@@ -110,8 +110,8 @@ def _create_cfunctype(
 if os.name == "nt":
 
     def _create_winfunctype(  # type: ignore
-        restype_: type[CObjOrPtr],
-        *argtypes_: type[CObjOrPtr],
+        restype_: type[CDataType],
+        *argtypes_: type[CDataType],
         use_errno: bool = False,
         use_last_error: bool = False,
     ) -> type["WinFunctionType"]:
@@ -130,8 +130,8 @@ if os.name == "nt":
 else:
 
     def _create_winfunctype(
-        restype_: type[CObjOrPtr],
-        *argtypes_: type[CObjOrPtr],
+        restype_: type[CDataType],
+        *argtypes_: type[CDataType],
         use_errno: bool = False,
         use_last_error: bool = False,
     ) -> typing_extensions.Never:
@@ -139,7 +139,7 @@ else:
 
 
 def _create_pyfunctype(
-    restype_: type[CObjOrPtr], *argtypes_: type[CObjOrPtr]
+    restype_: type[CDataType], *argtypes_: type[CDataType]
 ) -> type["CFunctionType"]:
     flags = _FUNCFLAG_CDECL | _FUNCFLAG_PYTHONAPI
     return _create_functype("CFunctionType", restype_, *argtypes_, flags=flags, _cache=None)
