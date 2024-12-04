@@ -1,12 +1,10 @@
+import _ctypes
 import ctypes
 import typing
 
-# from weakref import WeakValueDictionary
 import typing_extensions
 
 if typing.TYPE_CHECKING:
-    import _ctypes
-
     CData: typing_extensions.TypeAlias = "_ctypes._CData"
     CArgObject: typing_extensions.TypeAlias = "_ctypes._CArgObject"
     PyCPointerType = _ctypes._Pointer
@@ -15,8 +13,25 @@ else:
     CArgObject = type(ctypes.byref(ctypes.c_int()))
     PyCPointerType = type(ctypes.POINTER(ctypes.c_int))
 
-CTypes = typing.Union[CData, ctypes.Structure, ctypes.Union, PyCPointerType, ctypes.Array]
-CTYPES = (CData, ctypes.Structure, ctypes.Union, PyCPointerType, ctypes.Array)
+CTypes: typing_extensions.TypeAlias = typing.Union[
+    CData, ctypes.Structure, ctypes.Union, PyCPointerType, ctypes.Array
+]
+CTYPES = (
+    CData,  # pyright: ignore[reportGeneralTypeIssues] # we've already got the real CData type.
+    ctypes.Structure,
+    ctypes.Union,
+    PyCPointerType,
+    ctypes.Array,
+    _ctypes.CFuncPtr,
+)
+CDataType: typing_extensions.TypeAlias = typing.Union[
+    "ctypes._SimpleCData[typing.Any]",
+    "PyCPointerType[typing.Any]",
+    _ctypes.CFuncPtr,
+    ctypes.Union,
+    ctypes.Structure,
+    "ctypes.Array[typing.Any]",
+]
 
 _CT = CT = typing.TypeVar("_CT", bound=CData)
 _PT = PT = typing.TypeVar("_PT")

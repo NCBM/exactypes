@@ -19,7 +19,7 @@ import typing_extensions
 from ..exceptions import AnnotationError
 
 # from ..types import CT as _CT
-from ..types import CTYPES, CObjOrPtr
+from ..types import CTYPES, CDataType, CObjOrPtr
 from ..types import PT as _PT
 from ..types import CData as _CData
 from . import argtypes as argtypes
@@ -147,8 +147,8 @@ def _create_pyfunctype(
 
 def _digest_annotated_types(
     *types_: type, target_name: str, key_name: typing.Optional[str] = None
-) -> tuple[type[CObjOrPtr], ...]:
-    res: list[type[CObjOrPtr]] = []
+) -> tuple[type[CDataType], ...]:
+    res: list[type[CDataType]] = []
     for i, tp in enumerate(types_):
         if typing_extensions.get_origin(tp) is not None:
             _, tp = typing.cast(tuple[typing.Any, type], typing_extensions.get_args(tp))
@@ -158,7 +158,7 @@ def _digest_annotated_types(
             continue
 
         if issubclass(tp, CTYPES):
-            res.append(tp)
+            res.append(tp)  # pyright: ignore[reportArgumentType] # feel free to put data, it's safe
             continue
 
         if not issubclass(tp, CTYPES):
@@ -168,16 +168,13 @@ def _digest_annotated_types(
                 key_name if key_name is not None else f"<parameter[{i}]>",
             )
 
-        res.append(tp)
+        res.append(tp)  # pyright: ignore[reportArgumentType] # see above
     return tuple(res)
 
 
 if typing.TYPE_CHECKING:
     _PF: typing_extensions.TypeAlias = typing.Union[
         tuple[int], tuple[int, typing.Optional[str]], tuple[int, typing.Optional[str], typing.Any]
-    ]
-    _ECT: typing_extensions.TypeAlias = Callable[
-        [typing.Optional[_CData], _CFuncPtr, tuple[_CData, ...]], _CData
     ]
 
     class CFnType(_CFuncPtr, typing.Generic[_PS, _PT]):
@@ -188,9 +185,17 @@ if typing.TYPE_CHECKING:
 
         >>> CFnType[[argtype1, argtype2, ...], restype]
         """
-        _restype_: typing.Union[type[_CData], Callable[[int], typing.Any], None]
-        _argtypes_: Sequence[type[_CData]]
-        errcheck: _ECT
+
+        _restype_: typing.Union[type[CDataType], Callable[[int], typing.Any], None]
+        _argtypes_: Sequence[type[CDataType]]
+        _errcheck_: Callable[
+            [
+                typing.Union[_CData, CDataType, None],
+                _CFuncPtr,
+                tuple[typing.Union[_CData, CDataType], ...],
+            ],
+            CDataType,
+        ]
         # Abstract attribute that must be defined on subclasses
         _flags_: typing.ClassVar[int]
 
@@ -232,6 +237,7 @@ else:
 
         >>> CFnType[[argtype1, argtype2, ...], restype]
         """
+
         def __new__(
             cls, rtype, *atypes, use_errno: bool = False, use_last_error: bool = True
         ) -> type[_CFuncPtr]:
@@ -261,9 +267,10 @@ class CCallWrapper(typing.Generic[_PS, _PT]):
     This class is used to wrap C functions with python functions annotated with ctypes types.
     The wrapped callable can be called as if it were a normal python function.
     """
+
     dll: ctypes.CDLL
     fnname: str
-    argtypes: Sequence[type[CObjOrPtr]]
+    argtypes: Sequence[type[CDataType]]
     restype: type[_PT]
     _paramorder: tuple[str, ...]
     _paramdefaults: dict[str, typing.Any]
