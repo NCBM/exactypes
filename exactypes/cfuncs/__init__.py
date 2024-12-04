@@ -19,10 +19,9 @@ import typing_extensions
 from ..exceptions import AnnotationError
 
 # from ..types import CT as _CT
+from ..types import CTYPES, CObjOrPtr
 from ..types import PT as _PT
 from ..types import CData as _CData
-from ..types import CObjOrPtr
-from ..types import PyCPointerType as _PyCPointerType
 from . import argtypes as argtypes
 from . import restype as restype
 
@@ -151,14 +150,18 @@ def _digest_annotated_types(
 ) -> tuple[type[CObjOrPtr], ...]:
     res: list[type[CObjOrPtr]] = []
     for i, tp in enumerate(types_):
-        if isinstance(tp, (types.GenericAlias, typing._GenericAlias)):  # type: ignore[attr-defined]  # pyright: ignore[reportAttributeAccessIssue]
+        if typing_extensions.get_origin(tp) is not None:
             _, tp = typing.cast(tuple[typing.Any, type], typing_extensions.get_args(tp))
 
-        if issubclass(tp, (_CData, _PyCPointerType)):
+        if tp is None:
             res.append(tp)
             continue
 
-        if not issubclass(tp, (_CData, _PyCPointerType)):
+        if issubclass(tp, CTYPES):
+            res.append(tp)
+            continue
+
+        if not issubclass(tp, CTYPES):
             raise AnnotationError(
                 f"Bad annotation type '{tp!s}'.",
                 target_name,
