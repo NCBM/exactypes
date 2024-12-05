@@ -32,7 +32,7 @@ c_ubyte = typing.Annotated[typing.Union[int, ctypes.c_ubyte], ctypes.c_ubyte]
 c_byte = typing.Annotated[typing.Union[int, ctypes.c_byte], ctypes.c_byte]
 c_char = typing.Annotated[typing.Union[bytes, ctypes.c_char], ctypes.c_char]
 c_char_p = typing.Annotated[typing.Union[bytes, None, ctypes.c_char_p], ctypes.c_char_p]
-c_void_p = typing.Annotated[typing.Union[int, None, ctypes.c_void_p, "Pointer", ctypes.Array], ctypes.c_void_p]
+c_void_p = typing.Annotated[typing.Union[int, None, ctypes.c_void_p, "ArgPtr", ctypes.Array], ctypes.c_void_p]
 c_bool = typing.Annotated[typing.Union[bool, SupportsBool, ctypes.c_bool], ctypes.c_bool]
 c_wchar_p = typing.Annotated[typing.Union[str, None, ctypes.c_wchar_p], ctypes.c_wchar_p]
 c_wchar = typing.Annotated[typing.Union[str, ctypes.c_wchar], ctypes.c_wchar]
@@ -70,15 +70,15 @@ if sys.version_info >= (3, 14):
 
 if typing.TYPE_CHECKING:
     import _ctypes
-    Pointer: typing_extensions.TypeAlias = typing.Union[_ctypes._Pointer[_XCT], _CArgObject]
+    ArgPtr: typing_extensions.TypeAlias = typing.Union[_ctypes._Pointer[_XCT], _CArgObject]
 else:
 
-    class Pointer:
+    class ArgPtr:
         def __class_getitem__(cls, pt: type[_XCT]) -> type["_ctypes._Pointer[_XCT]"]:
             if isinstance(pt, str):
                 return typing.cast(type["_ctypes._Pointer[_XCT]"], f"P[{pt!s}]")
             return typing.cast(type["_ctypes._Pointer[_XCT]"], ctypes.POINTER(pt))
 
 
-VaArgs: typing_extensions.TypeAlias = typing.Union[_CData, Pointer, int, bytes, str, None]
+VaArgs: typing_extensions.TypeAlias = typing.Union[_CData, ArgPtr, int, bytes, str, None]
 """C `...` va_args marker."""

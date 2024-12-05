@@ -1,3 +1,6 @@
+"""
+This test shows ability of containing and accessing arrays in a C structure.
+"""
 from __future__ import annotations
 
 import ctypes

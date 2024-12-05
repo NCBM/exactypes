@@ -26,11 +26,11 @@ assert B._restype_ is None
 
 @ccall(libc, override_name="strtod")
 def bytes_to_float(
-    ss: argtypes.c_char_p, se: argtypes.Pointer[ctypes.c_char_p]
+    ss: argtypes.c_char_p, se: argtypes.ArgPtr[ctypes.c_char_p]
 ) -> restype.c_double: ...
 
 
-assert bytes_to_float.argtypes == (ctypes.c_char_p, argtypes.Pointer[ctypes.c_char_p])
+assert bytes_to_float.argtypes == (ctypes.c_char_p, argtypes.ArgPtr[ctypes.c_char_p])
 assert bytes_to_float.restype == ctypes.c_double
 
 cp = ctypes.c_char_p()

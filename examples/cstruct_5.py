@@ -1,3 +1,6 @@
+"""
+This test checks whether the error message is expected.
+"""
 import ctypes
 from typing import Annotated
 

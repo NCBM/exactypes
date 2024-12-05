@@ -11,3 +11,4 @@ from .cdataobject import datafield as datafield
 from .cfuncs import argtypes as argtypes
 from .cfuncs import ccall as ccall
 from .cfuncs import restype as restype
+from .types import Ptr as Ptr

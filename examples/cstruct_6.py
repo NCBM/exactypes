@@ -1,3 +1,6 @@
+"""
+This test shows capability of accessing a flexible array member (C99).
+"""
 from __future__ import annotations
 
 import ctypes

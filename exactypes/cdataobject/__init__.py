@@ -8,34 +8,16 @@ from functools import partial, wraps
 import typing_extensions
 
 from ..exceptions import AnnotationError
-from ..types import CDATATYPE, CTYPES, CDataObjectWrapper, CDataType, CTypes, StructUnionType
-from ..types import PyCPointerType as _PyCPointerType
+from ..types import CTYPES, CDataObjectWrapper, CDataType, CTypes, StructUnionType
 from .datafield import CArrayField, CFlexibleArray
 from .datafield import CDataField as CDataField
 from .refsolver import RefCache as RefCache
 from .refsolver import get_unresolved_names
 
-_CDO_T = typing.TypeVar("_CDO_T", ctypes.Structure, ctypes.Union)
-_XCT = typing.TypeVar("_XCT", bound=CTypes)
-
-if typing_extensions.TYPE_CHECKING:
+if typing.TYPE_CHECKING:
     from collections.abc import Callable
-    P: typing_extensions.TypeAlias = "ctypes._Pointer[_XCT]"
-else:
 
-    class P:
-        def __new__(
-            cls, cobj: typing.Union[_XCT, _PyCPointerType, None] = None
-        ) -> "typing.Union[ctypes._Pointer[_XCT], None]":
-            if cobj is None:
-                return None
-            return ctypes.pointer(cobj)  # type: ignore
-
-        def __class_getitem__(cls, pt: type[_XCT]) -> type["ctypes._Pointer[_XCT]"]:
-            if isinstance(pt, str):
-                return typing.cast(type["ctypes._Pointer[_XCT]"], f"P[{pt!s}]")
-            return typing.cast(type["ctypes._Pointer[_XCT]"], ctypes.POINTER(pt))
-
+_CDO_T = typing.TypeVar("_CDO_T", ctypes.Structure, ctypes.Union)
 
 _exactypes_cstruct_cache: RefCache = RefCache()
 
@@ -168,7 +150,7 @@ def _resolve_field(  # noqa: C901
     origin = typing_extensions.get_origin(tp)
 
     if origin is None:  # non-generic, check whether tp is C type
-        if issubclass(tp, CDATATYPE):
+        if issubclass(tp, CTYPES):
             _field = [name, tp]
             getattr(cls, "_exactypes_unresolved_fields_").append(_field)
             return

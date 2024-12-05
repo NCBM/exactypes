@@ -1,23 +1,26 @@
+"""
+This test shows ability of default values.
+"""
 from __future__ import annotations
 
 import ctypes
 import typing
 
-from exactypes.cdataobject import cstruct, cunion
-from exactypes.cdataobject.datafield import c_double, c_float, c_int, value
+from exactypes import cstruct, cunion
+from exactypes import datafield as D
 
 
 @cstruct(defaults=True)
 class A4(ctypes.Structure):
-    a: c_int = value(42)
-    _padding: typing.ClassVar[c_int]
-    b: c_double = value(114.514)
+    a: D.c_int = D.value(42)
+    _padding: typing.ClassVar[D.c_int]
+    b: D.c_double = D.value(114.514)
 
 
 @cunion
 class A5(ctypes.Union):
-    a: c_int = value()
-    b: c_float = value()
+    a: D.c_int = D.value()
+    b: D.c_float = D.value()
 
 
 assert A4._fields_ == (

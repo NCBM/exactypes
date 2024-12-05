@@ -56,6 +56,24 @@ class SupportsBool(typing_extensions.Protocol):
     def __bool__(self) -> bool: ...
 
 
+if typing_extensions.TYPE_CHECKING:
+    Ptr: typing_extensions.TypeAlias = "ctypes._Pointer[_XCT]"
+else:
+
+    class Ptr:
+        def __new__(
+            cls, cobj: typing.Union[_XCT, PyCPointerType, None] = None
+        ) -> "typing.Union[ctypes._Pointer[_XCT], None]":
+            if cobj is None:
+                return None
+            return ctypes.pointer(cobj)  # type: ignore
+
+        def __class_getitem__(cls, pt: type[_XCT]) -> type["ctypes._Pointer[_XCT]"]:
+            if isinstance(pt, str):
+                return typing.cast(type["ctypes._Pointer[_XCT]"], f"Ptr[{pt!s}]")
+            return typing.cast(type["ctypes._Pointer[_XCT]"], ctypes.POINTER(pt))
+
+
 # SupportsDictOrOp: typing_extensions.TypeAlias = typing.Union[
 #     dict[str, typing.Any], WeakValueDictionary[str, typing.Any]
 # ]

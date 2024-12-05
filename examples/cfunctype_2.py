@@ -2,13 +2,15 @@ from __future__ import annotations
 
 import ctypes
 
-from exactypes.cfuncs import argtypes, ccall, restype
+from exactypes import argtypes as A
+from exactypes import ccall
+from exactypes import restype as R
 
 libc = ctypes.CDLL("libc.so.6")
 
 
 @ccall(libc)
-def printf(fmt: argtypes.c_char_p, *args: argtypes.VaArgs) -> restype.c_int: ...
+def printf(fmt: A.c_char_p, *args: A.VaArgs) -> R.c_int: ...
 
 
 out1 = printf(b"Hello, %s!\n", b"World")
