@@ -153,10 +153,6 @@ def _digest_annotated_types(
         if typing_extensions.get_origin(tp) is not None:
             _, tp = typing.cast(tuple[typing.Any, type], typing_extensions.get_args(tp))
 
-        if tp is None:
-            res.append(tp)
-            continue
-
         if issubclass(tp, CTYPES):
             res.append(tp)  # pyright: ignore[reportArgumentType] # feel free to put data, it's safe
             continue
@@ -242,7 +238,10 @@ else:
             cls, rtype, *atypes, use_errno: bool = False, use_last_error: bool = True
         ) -> type[_CFuncPtr]:
             atypes = _digest_annotated_types(*atypes)
-            (rtype,) = _digest_annotated_types(rtype)
+            if rtype == "None":
+                rtype = None
+            if rtype is not None:
+                (rtype,) = _digest_annotated_types(rtype)
             return _create_cfunctype(
                 rtype, *atypes, use_errno=use_errno, use_last_error=use_last_error
             )
@@ -250,11 +249,14 @@ else:
         def __class_getitem__(cls, args: tuple[Sequence[type], type]) -> type[_CFuncPtr]:
             atypes, rtype = args
             atypes = _digest_annotated_types(*atypes, target_name=cls.__name__)
-            (rtype,) = _digest_annotated_types(
-                rtype,
-                target_name=cls.__name__,
-                key_name="<return-type>",
-            )
+            if rtype == "None":
+                rtype = None
+            if rtype is not None:
+                (rtype,) = _digest_annotated_types(
+                    rtype,
+                    target_name=cls.__name__,
+                    key_name="<return-type>",
+                )
             return _create_cfunctype(rtype, *atypes)
 
         def __call__(self, *args: _PS.args, **kwds: _PS.kwargs) -> _PT: ...
@@ -322,13 +324,16 @@ class CCallWrapper(typing.Generic[_PS, _PT]):
             )
             self.argtypes = argtypes
 
-            (_restype,) = _digest_annotated_types(
-                eval(_restype, _env.f_globals, _env.f_locals)
-                if isinstance(_restype, str)
-                else _restype,
-                target_name=self.fnname,
-                key_name="<return-type>",
-            )
+            if _restype == "None":
+                _restype = None
+            if _restype is not None:
+                (_restype,) = _digest_annotated_types(
+                    eval(_restype, _env.f_globals, _env.f_locals)
+                    if isinstance(_restype, str)
+                    else _restype,
+                    target_name=self.fnname,
+                    key_name="<return-type>",
+                )
         else:
             self.argtypes = _argtypes
         self.restype = typing.cast(type[_PT], _restype)
