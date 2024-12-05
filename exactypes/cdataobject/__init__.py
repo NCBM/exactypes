@@ -226,8 +226,7 @@ def _cdataobj(
 
     cls._pack_ = pack
     if sys.version_info >= (3, 13):
-        # typeshed shipped with basedpyright (at least until v1.22.0) do not know this.
-        cls._align_ = align  # pyright: ignore[reportAttributeAccessIssue]
+        cls._align_ = align
 
     real_fields: list[str] = []
 
