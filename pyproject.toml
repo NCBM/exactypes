@@ -1,6 +1,6 @@
 [project]
 name = "exactypes"
-version = "0.2.1"
+version = "0.3.0"
 description = "Helps creating typed ctypes-based python library"
 authors = [
     {name = "HivertMoZara", email = "worldmozara@163.com"},
