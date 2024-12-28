@@ -11,7 +11,9 @@ from exactypes.exceptions import AnnotationError
 
 with assert_error(
     AnnotationError,
-    assert_message="Error in parsing 'a' of 'E1':\n\tBad annotation type '<class 'int'>'.",
+    assert_keywords=(
+        "Error in parsing 'a' of 'E1'", "Bad annotation type '<class 'int'>'."
+    ),
 ):
 
     @cstruct
@@ -21,7 +23,7 @@ with assert_error(
 
 with assert_error(
     AnnotationError,
-    assert_message=("Error in parsing 'a' of 'E2':\n" "\tCannot use array type without length."),
+    assert_keywords=("Error in parsing 'a' of 'E2'", "Cannot use array type without length."),
 ):
 
     @cstruct
@@ -31,9 +33,9 @@ with assert_error(
 
 with assert_error(
     AnnotationError,
-    assert_message=(
-        "Error in parsing 'a' of 'E3':\n"
-        "\tThe second annotation metadata must be an int, not <class 'str'>."
+    assert_keywords=(
+        "Error in parsing 'a' of 'E3'",
+        "The second annotation metadata must be an int, not <class 'str'>."
     ),
 ):
 
@@ -44,9 +46,9 @@ with assert_error(
 
 with assert_error(
     AnnotationError,
-    assert_message=(
-        "Error in parsing 'a' of 'E4':\n"
-        "\tBad annotation type 'typing.Annotated[int, <class 'ctypes.c_int'>, 24, 'haha']'."
+    assert_keywords=(
+        "Error in parsing 'a' of 'E4'",
+        "Bad annotation type 'typing.Annotated[int, <class 'ctypes.c_int'>, 24, 'haha']'."
     ),
 ):
 
@@ -57,8 +59,8 @@ with assert_error(
 
 with assert_error(
     AnnotationError,
-    assert_message=(
-        "Error in parsing 'a' of 'E5':\n\tBad annotation type 'typing.Annotated[int, 24]'."
+    assert_keywords=(
+        "Error in parsing 'a' of 'E5'", "Bad annotation type 'typing.Annotated[int, 24]'."
     ),
 ):
 
@@ -69,9 +71,9 @@ with assert_error(
 
 with assert_error(
     AnnotationError,
-    assert_message=(
-        "Error in parsing 'a' of 'E6':\n"
-        "\tCannot apply int metadata on a untyped array or a typed and sized array."
+    assert_keywords=(
+        "Error in parsing 'a' of 'E6'",
+        "Cannot apply int metadata on a untyped array or a typed and sized array."
     ),
 ):
 

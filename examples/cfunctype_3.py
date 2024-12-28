@@ -12,24 +12,27 @@ from exactypes.exceptions import AnnotationError
 
 with assert_error(
     AnnotationError,
-    assert_message=(
-        "Error in parsing '<parameter[2]>' of 'CFnType':\n\tBad annotation type '<class 'str'>'."
+    assert_keywords=(
+        "Error in parsing '<parameter[2]>' of 'CFnType'",
+        "Bad annotation type '<class 'str'>'."
     ),
 ):
     E1 = CFnType[[A.c_int, A.c_char_p, str], R.c_longdouble]
 
 with assert_error(
     AnnotationError,
-    assert_message=(
-        "Error in parsing '<return-type>' of 'CFnType':\n\tBad annotation type '<class 'float'>'."
+    assert_keywords=(
+        "Error in parsing '<return-type>' of 'CFnType'",
+        "Bad annotation type '<class 'float'>'."
     ),
 ):
     E2 = CFnType[[A.c_int, A.c_char_p], float]
 
 with assert_error(
     AnnotationError,
-    assert_message=(
-        "Error in parsing '<parameter[0]>' of 'strtod':\n\tBad annotation type '<class 'bytes'>'."
+    assert_keywords=(
+        "Error in parsing '<parameter[0]>' of 'strtod'",
+        "Bad annotation type '<class 'bytes'>'."
     ),
 ):
 
@@ -38,8 +41,9 @@ with assert_error(
 
 with assert_error(
     AnnotationError,
-    assert_message=(
-        "Error in parsing '<return-type>' of 'strtod':\n\tBad annotation type '<class 'float'>'."
+    assert_keywords=(
+        "Error in parsing '<return-type>' of 'strtod'",
+        "Bad annotation type '<class 'float'>'."
     ),
 ):
 
