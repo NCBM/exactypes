@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import ctypes
 
+from test_utils import libc
+
 from exactypes import argtypes as A
 from exactypes import ccall
 from exactypes import restype as R
-
-libc = ctypes.CDLL("libc.so.6")
 
 
 @ccall(libc)
