@@ -10,7 +10,7 @@ from _ctypes import CFuncPtr as _CFuncPtr
 from collections.abc import Callable, Sequence
 
 if os.name == "nt":
-    from _ctypes import FUNCFLAG_STDCALL as _FUNCFLAG_STDCALL  # type: ignore
+    from _ctypes import FUNCFLAG_STDCALL as _FUNCFLAG_STDCALL
 
 import types
 
@@ -20,20 +20,23 @@ from ..exceptions import AnnotationError
 
 # from ..types import CT as _CT
 from ..types import CTYPES, CDataType
-from ..types import PT as _PT
 from ..types import CData as _CData
 from . import argtypes as argtypes
 from . import restype as restype
 
 _PS = typing_extensions.ParamSpec("_PS")
+_PT = typing_extensions.TypeVar("_PT")
+_IPT = typing_extensions.TypeVar("_IPT")
 
 
 if typing.TYPE_CHECKING:
 
+    @typing.type_check_only
     class CFunctionType(_CFuncPtr): ...
 
     if os.name == "nt":
 
+        @typing.type_check_only
         class WinFunctionType(_CFuncPtr): ...
 
 
@@ -277,6 +280,16 @@ class CCallWrapper(typing.Generic[_PS, _PT]):
     _paramorder: tuple[str, ...]
     _paramdefaults: dict[str, typing.Any]
     _hasvaargs: bool = False
+    _errcheck: typing.Optional[
+        Callable[
+            [
+                typing.Union[_CData, CDataType, None],
+                _CFuncPtr,
+                tuple[typing.Union[_CData, CDataType], ...],
+            ],
+            _PT,
+        ]
+    ] = None
 
     def __init__(
         self,
@@ -343,11 +356,30 @@ class CCallWrapper(typing.Generic[_PS, _PT]):
         self._func = self.dll[self.fnname]
         self._func.argtypes = self.argtypes
         self._func.restype = self.restype
+        if self._errcheck is not None:
+            self._func.errcheck = self._errcheck  # pyright: ignore[reportAttributeAccessIssue]
 
     def as_cfntype(self) -> type["CFnType[_PS, _PT]"]:
         if typing.TYPE_CHECKING:
             return CFnType[_PS, _PT]
         return CFnType[[*self.argtypes], self.restype]
+
+    def errcheck(
+        self,
+        ecf: Callable[
+            [
+                _PT,
+                _CFuncPtr,
+                tuple[typing.Union[_CData, CDataType], ...],
+            ],
+            _IPT,
+        ],
+    ) -> "CCallWrapper[_PS, _IPT]":
+        # here we change the return type both runtime and typing.
+        # doing this requires many ignore comments.
+        self._func.errcheck = ecf  # pyright: ignore[reportAttributeAccessIssue]
+        self._errcheck = ecf  # pyright: ignore[reportAttributeAccessIssue]
+        return self  # pyright: ignore[reportReturnType]
 
 
 def ccall(lib: ctypes.CDLL, *, override_name: typing.Optional[str] = None):
