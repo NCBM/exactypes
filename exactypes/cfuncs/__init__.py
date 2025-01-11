@@ -48,11 +48,14 @@ _FunctionType: typing_extensions.TypeAlias = typing.Union[
 @typing_extensions.overload
 def _create_functype(
     name: typing_extensions.Literal["CFunctionType"],
-    restype_: type[CDataType],
+    restype_: typing.Optional[type[CDataType]],
     *argtypes_: type[CDataType],
     flags: int,
     _cache: typing.Optional[
-        dict[tuple[type[CDataType], tuple[type[CDataType], ...], int], type["CFunctionType"]]
+        dict[
+            tuple[typing.Optional[type[CDataType]], tuple[type[CDataType], ...], int],
+            type["CFunctionType"],
+        ]
     ],
 ) -> type["CFunctionType"]: ...
 
@@ -60,23 +63,32 @@ def _create_functype(
 @typing_extensions.overload
 def _create_functype(
     name: typing_extensions.Literal["WinFunctionType"],
-    restype_: type[CDataType],
+    restype_: typing.Optional[type[CDataType]],
     *argtypes_: type[CDataType],
     flags: int,
     _cache: typing.Optional[
-        dict[tuple[type[CDataType], tuple[type[CDataType], ...], int], type["WinFunctionType"]]
+        dict[
+            tuple[typing.Optional[type[CDataType]], tuple[type[CDataType], ...], int],
+            type["WinFunctionType"],
+        ]
     ],
 ) -> type["WinFunctionType"]: ...
 
 
 def _create_functype(
     name: typing_extensions.Literal["CFunctionType", "WinFunctionType"],
-    restype_: type[CDataType],
+    restype_: typing.Optional[type[CDataType]],
     *argtypes_: type[CDataType],
     flags: int,
     _cache: typing.Union[
-        dict[tuple[type[CDataType], tuple[type[CDataType], ...], int], type["CFunctionType"]],
-        dict[tuple[type[CDataType], tuple[type[CDataType], ...], int], type["WinFunctionType"]],
+        dict[
+            tuple[typing.Optional[type[CDataType]], tuple[type[CDataType], ...], int],
+            type["CFunctionType"],
+        ],
+        dict[
+            tuple[typing.Optional[type[CDataType]], tuple[type[CDataType], ...], int],
+            type["WinFunctionType"],
+        ],
         None,
     ],
 ) -> _FunctionType:
@@ -91,7 +103,7 @@ def _create_functype(
 
 
 def _create_cfunctype(
-    restype_: type[CDataType],
+    restype_: typing.Optional[type[CDataType]],
     *argtypes_: type[CDataType],
     use_errno: bool = False,
     use_last_error: bool = False,
@@ -113,7 +125,7 @@ def _create_cfunctype(
 if os.name == "nt":
 
     def _create_winfunctype(  # type: ignore
-        restype_: type[CDataType],
+        restype_: typing.Optional[type[CDataType]],
         *argtypes_: type[CDataType],
         use_errno: bool = False,
         use_last_error: bool = False,
@@ -133,7 +145,7 @@ if os.name == "nt":
 else:
 
     def _create_winfunctype(
-        restype_: type[CDataType],
+        restype_: typing.Optional[type[CDataType]],
         *argtypes_: type[CDataType],
         use_errno: bool = False,
         use_last_error: bool = False,
@@ -142,7 +154,7 @@ else:
 
 
 def _create_pyfunctype(
-    restype_: type[CDataType], *argtypes_: type[CDataType]
+    restype_: typing.Optional[type[CDataType]], *argtypes_: type[CDataType]
 ) -> type["CFunctionType"]:
     flags = _FUNCFLAG_CDECL | _FUNCFLAG_PYTHONAPI
     return _create_functype("CFunctionType", restype_, *argtypes_, flags=flags, _cache=None)
@@ -176,7 +188,7 @@ if typing.TYPE_CHECKING:
         tuple[int], tuple[int, typing.Optional[str]], tuple[int, typing.Optional[str], typing.Any]
     ]
 
-    class CFnType(_CFuncPtr, typing.Generic[_PS, _PT]):
+    class _BaseFnType(_CFuncPtr, typing.Generic[_PS, _PT]):
         """
         Wrapper for `CFUNCTYPE`.
 
@@ -226,6 +238,26 @@ if typing.TYPE_CHECKING:
 
         def __init__(self, *args, **kwargs): ...
         def __call__(self, *args: _PS.args, **kwds: _PS.kwargs) -> _PT: ...
+
+    class CFnType(_BaseFnType[_PS, _PT], typing.Generic[_PS, _PT]):
+        """
+        Wrapper for `CFUNCTYPE`.
+
+        Create a CFunctionType with:
+
+        >>> CFnType[[argtype1, argtype2, ...], restype]
+        """
+
+    if os.name == "nt":
+
+        class WinFnType(_BaseFnType[_PS, _PT], typing.Generic[_PS, _PT]):
+            """
+            Wrapper for `WINFUNCTYPE`.
+
+            Create a WinFunctionType with:
+
+            >>> WinFnType[[argtype1, argtype2, ...], restype]
+            """
 else:
 
     class CFnType(typing.Generic[_PS, _PT]):
@@ -237,20 +269,17 @@ else:
         >>> CFnType[[argtype1, argtype2, ...], restype]
         """
 
-        def __new__(
-            cls, rtype, *atypes, use_errno: bool = False, use_last_error: bool = True
-        ) -> type[_CFuncPtr]:
-            atypes = _digest_annotated_types(*atypes)
-            if rtype == "None":
-                rtype = None
-            if rtype is not None:
-                (rtype,) = _digest_annotated_types(rtype)
-            return _create_cfunctype(
-                rtype, *atypes, use_errno=use_errno, use_last_error=use_last_error
-            )
+        def __new__(cls) -> typing_extensions.Never:
+            raise NotImplementedError(f"`{cls.__name__}` wrapper should not have any instances.")
 
-        def __class_getitem__(cls, args: tuple[Sequence[type], type]) -> type[_CFuncPtr]:
-            atypes, rtype = args
+        @classmethod
+        def new(
+            cls,
+            rtype: typing.Optional[type],
+            *atypes: type,
+            use_errno: bool = False,
+            use_last_error: bool = False,
+        ) -> type["CFunctionType"]:
             atypes = _digest_annotated_types(*atypes, target_name=cls.__name__)
             if rtype == "None":
                 rtype = None
@@ -260,9 +289,56 @@ else:
                     target_name=cls.__name__,
                     key_name="<return-type>",
                 )
-            return _create_cfunctype(rtype, *atypes)
+            return _create_cfunctype(
+                rtype, *atypes, use_errno=use_errno, use_last_error=use_last_error
+            )
 
-        def __call__(self, *args: _PS.args, **kwds: _PS.kwargs) -> _PT: ...
+        def __class_getitem__(cls, args: tuple[Sequence[type], type]) -> type["CFunctionType"]:
+            atypes, rtype = args
+            return cls.new(rtype, *atypes)
+
+    if os.name == "nt":
+
+        class WinFnType(typing.Generic[_PS, _PT]):
+            """
+            Wrapper for `WINFUNCTYPE`.
+
+            Create a WinFunctionType with:
+
+            >>> WinFnType[[argtype1, argtype2, ...], restype]
+            """
+
+            def __new__(cls) -> typing_extensions.Never:
+                raise NotImplementedError(
+                    f"`{cls.__name__}` wrapper should not have any instances."
+                )
+
+            @classmethod
+            def new(
+                cls,
+                rtype: typing.Optional[type],
+                *atypes: type,
+                use_errno: bool = False,
+                use_last_error: bool = False,
+            ) -> type["WinFunctionType"]:
+                atypes = _digest_annotated_types(*atypes, target_name=cls.__name__)
+                if rtype == "None":
+                    rtype = None
+                if rtype is not None:
+                    (rtype,) = _digest_annotated_types(
+                        rtype,
+                        target_name=cls.__name__,
+                        key_name="<return-type>",
+                    )
+                return _create_winfunctype(
+                    rtype, *atypes, use_errno=use_errno, use_last_error=use_last_error
+                )
+
+            def __class_getitem__(
+                cls, args: tuple[Sequence[type], type]
+            ) -> type["WinFunctionType"]:
+                atypes, rtype = args
+                return cls.new(rtype, *atypes)
 
 
 class CCallWrapper(typing.Generic[_PS, _PT]):
@@ -363,6 +439,13 @@ class CCallWrapper(typing.Generic[_PS, _PT]):
         if typing.TYPE_CHECKING:
             return CFnType[_PS, _PT]
         return CFnType[[*self.argtypes], self.restype]
+
+    if os.name == "nt":
+
+        def as_winfntype(self) -> type["WinFnType[_PS, _PT]"]:
+            if typing.TYPE_CHECKING:
+                return WinFnType[_PS, _PT]
+            return WinFnType[[*self.argtypes], self.restype]
 
     def errcheck(
         self,
