@@ -2,7 +2,7 @@ from ctypes import c_int
 
 from exactypes import array
 
-a = array.of(c_int)(list(range(10)), dynamic=True)
+a = array.of(c_int)(range(10), dynamic=True)
 
 assert a[:] == [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 del a[:2]

@@ -257,7 +257,7 @@ class _CompatArray(Array[_XCT], typing.Generic[_XCT, _PT]):
         @typing.overload
         def __init__(
             self,
-            data: typing.Optional[Sequence[typing.Union[_XCT, _PT]]] = None,
+            data: typing.Optional[Iterable[typing.Union[_XCT, _PT]]] = None,
             *,
             length: int,
             dynamic: typing.Literal[False] = False,
@@ -266,7 +266,7 @@ class _CompatArray(Array[_XCT], typing.Generic[_XCT, _PT]):
         @typing.overload
         def __init__(
             self,
-            data: Sequence[typing.Union[_XCT, _PT]],
+            data: Iterable[typing.Union[_XCT, _PT]],
             *,
             length: typing.Literal[None] = None,
             dynamic: bool = False,
@@ -283,7 +283,7 @@ class _CompatArray(Array[_XCT], typing.Generic[_XCT, _PT]):
 
         def __init__(
             self,
-            data: typing.Optional[Sequence[typing.Union[_XCT, _PT]]] = None,
+            data: typing.Optional[Iterable[typing.Union[_XCT, _PT]]] = None,
             *,
             length: typing.Optional[int] = None,
             dynamic: bool = False,
@@ -336,7 +336,7 @@ class _CompatStrBytesArray(Array[_XCT], typing.Generic[_XCT, _PT]):
         @typing.overload
         def __init__(
             self,
-            data: typing.Optional[Sequence[typing.Union[_XCT, _PT]]] = None,
+            data: typing.Optional[Iterable[typing.Union[_XCT, _PT]]] = None,
             *,
             length: int,
             dynamic: typing.Literal[False] = False,
@@ -345,7 +345,7 @@ class _CompatStrBytesArray(Array[_XCT], typing.Generic[_XCT, _PT]):
         @typing.overload
         def __init__(
             self,
-            data: Sequence[typing.Union[_XCT, _PT]],
+            data: Iterable[typing.Union[_XCT, _PT]],
             *,
             length: typing.Literal[None] = None,
             dynamic: bool = False,
@@ -362,7 +362,7 @@ class _CompatStrBytesArray(Array[_XCT], typing.Generic[_XCT, _PT]):
 
         def __init__(
             self,
-            data: typing.Optional[Sequence[typing.Union[_XCT, _PT]]] = None,
+            data: typing.Optional[Iterable[typing.Union[_XCT, _PT]]] = None,
             *,
             length: typing.Optional[int] = None,
             dynamic: bool = False,
