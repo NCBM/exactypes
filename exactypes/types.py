@@ -1,4 +1,4 @@
-import _ctypes  # noqa: A005
+import _ctypes
 import ctypes
 import typing
 
