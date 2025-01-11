@@ -1,4 +1,4 @@
-import _ctypes
+import _ctypes  # noqa: A005
 import ctypes
 import typing
 
@@ -50,11 +50,6 @@ CDataObjectWrapper: typing_extensions.TypeAlias = typing.Callable[[type[CT]], ty
 StructUnionType: typing_extensions.TypeAlias = typing.Union[
     type[ctypes.Structure], type[ctypes.Union]
 ]
-
-
-class SupportsBool(typing_extensions.Protocol):
-    def __bool__(self) -> bool: ...
-
 
 if typing_extensions.TYPE_CHECKING:
     Ptr: typing_extensions.TypeAlias = "ctypes._Pointer[_XCT]"
