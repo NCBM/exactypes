@@ -2,7 +2,6 @@
 Helps creating typed ctypes-based python library.
 """
 
-from . import array as array
 from . import cdataobject as cdataobject
 from . import cfuncs as cfuncs
 from .cdataobject import cstruct as cstruct

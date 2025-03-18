@@ -1,6 +1,6 @@
 from ctypes import c_int
 
-from exactypes import array
+from exactypes.hazmat import array
 
 a = array.of(c_int)(range(10), dynamic=True)
 

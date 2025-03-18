@@ -1,3 +1,10 @@
+"""
+Wrapped ctypes C array types
+
+WARNING: This module is made randomly and there is NO guarantee about its
+stability and efficiency.
+"""
+
 import contextlib
 import ctypes
 import sys
@@ -8,9 +15,9 @@ from weakref import WeakValueDictionary
 
 import typing_extensions
 
-from .exceptions import AnnotationError, ArrayUntyped
-from .types import PT as _PT
-from .types import CDataType, PyCPointerType
+from ..exceptions import AnnotationError, ArrayUntyped
+from ..types import PT as _PT
+from ..types import CDataType, PyCPointerType
 
 if typing.TYPE_CHECKING:
     from collections.abc import Iterator  # noqa: F401, RUF100

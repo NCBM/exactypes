@@ -1,4 +1,4 @@
-from exactypes import array
+from exactypes.hazmat import array
 
 a = array.of("c_wchar")("foo bar baz", dynamic=True)
 
