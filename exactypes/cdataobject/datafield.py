@@ -7,7 +7,7 @@ import ctypes
 import sys
 import typing
 
-from exactypes.array import offset_of
+from exactypes.hazmat.array import offset_of
 
 from ..types import PT as _PT
 from ..types import XCT as _XCT
