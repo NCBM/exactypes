@@ -94,7 +94,7 @@ class Array(MutableSequence[_XCT], typing.Generic[_XCT]):
                 "typed array should not be annotated again", cls.__name__, tp.__qualname__
             )
         array_type_cache = typing.cast(
-            WeakValueDictionary[type[_XCT], type["Array[_XCT]"]], _array_type_cache
+            "WeakValueDictionary[type[_XCT], type[Array[_XCT]]]", _array_type_cache
         )
         if tp in array_type_cache:
             return array_type_cache[tp]

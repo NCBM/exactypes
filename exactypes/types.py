@@ -65,8 +65,8 @@ else:
 
         def __class_getitem__(cls, pt: type[_XCT]) -> type["ctypes._Pointer[_XCT]"]:
             if isinstance(pt, str):
-                return typing.cast(type["ctypes._Pointer[_XCT]"], f"Ptr[{pt!s}]")
-            return typing.cast(type["ctypes._Pointer[_XCT]"], ctypes.POINTER(pt))
+                return typing.cast("type[ctypes._Pointer[_XCT]]", f"Ptr[{pt!s}]")
+            return typing.cast("type[ctypes._Pointer[_XCT]]", ctypes.POINTER(pt))
 
 
 # SupportsDictOrOp: typing_extensions.TypeAlias = typing.Union[

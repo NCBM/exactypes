@@ -166,7 +166,7 @@ def _digest_annotated_types(
     res: list[type[CDataType]] = []
     for i, tp in enumerate(types_):
         if typing_extensions.get_origin(tp) is not None:
-            _, tp = typing.cast(tuple[typing.Any, type], typing_extensions.get_args(tp))
+            _, tp = typing.cast("tuple[typing.Any, type]", typing_extensions.get_args(tp))
 
         if issubclass(tp, CTYPES):
             res.append(tp)  # pyright: ignore[reportArgumentType] # feel free to put data, it's safe
@@ -425,7 +425,7 @@ class CCallWrapper(typing.Generic[_PS, _PT]):
                 )
         else:
             self.argtypes = _argtypes
-        self.restype = typing.cast(type[_PT], _restype)
+        self.restype = typing.cast("type[_PT]", _restype)
 
     def update(self, dll: ctypes.CDLL) -> None:
         self.dll = dll

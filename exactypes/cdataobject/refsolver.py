@@ -54,7 +54,7 @@ class RefCache(WeakValueDictionary[str, typing.Any]):
         if key not in self._listening:
             return
         target, orig, env, real_fields = self._listening[key]
-        name, _type, *_ = typing.cast(tuple[str, str], target)
+        name, _type, *_ = typing.cast("tuple[str, str]", target)
         if get_unresolved_names(_type, *env, dict(self)):
             return
         _env = reduce(or_, env)

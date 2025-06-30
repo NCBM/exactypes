@@ -76,8 +76,8 @@ else:
     class ArgPtr:
         def __class_getitem__(cls, pt: type[_XCT]) -> type["_ctypes._Pointer[_XCT]"]:
             if isinstance(pt, str):
-                return typing.cast(type["_ctypes._Pointer[_XCT]"], f"P[{pt!s}]")
-            return typing.cast(type["_ctypes._Pointer[_XCT]"], ctypes.POINTER(pt))
+                return typing.cast("type[_ctypes._Pointer[_XCT]]", f"P[{pt!s}]")
+            return typing.cast("type[_ctypes._Pointer[_XCT]]", ctypes.POINTER(pt))
 
 
 VaArgs: typing_extensions.TypeAlias = typing.Union[_CData, ArgPtr, int, bytes, str, None]

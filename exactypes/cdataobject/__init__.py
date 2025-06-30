@@ -86,7 +86,7 @@ def _unwrap_classvar(
 def _resolve_annotated_field(cls, name, tp: typing.Any):  # noqa: C901
     args = typing_extensions.get_args(tp)  # unwrap generic args
     if len(args) == 3:  # [*, CT, int]
-        _, _type, extra = typing.cast(tuple[typing.Any, type[CTypes], int], args)
+        _, _type, extra = typing.cast("tuple[typing.Any, type[CTypes], int]", args)
         if not isinstance(extra, int):
             raise AnnotationError(
                 f"The second annotation metadata must be an int, not {type(extra)}.",
@@ -118,15 +118,15 @@ def _resolve_annotated_field(cls, name, tp: typing.Any):  # noqa: C901
         return _type, extra
 
     if origin is ctypes.Array:  # Array[CT], int
-        etype = typing.cast(type[CDataType], typing_extensions.get_args(_type)[0])
+        etype = typing.cast("type[CDataType]", typing_extensions.get_args(_type)[0])
         return etype * extra, None
 
     if origin is CDataField:  # CDF[PT, CT], int
-        _type = typing.cast(type[CDataType], typing_extensions.get_args(_type)[1])
+        _type = typing.cast("type[CDataType]", typing_extensions.get_args(_type)[1])
         return _type, extra
 
     if origin is CArrayField:  # CAF[PT, CT], int
-        etype = typing.cast(type[CDataType], typing_extensions.get_args(_type)[1])
+        etype = typing.cast("type[CDataType]", typing_extensions.get_args(_type)[1])
         return etype * extra, None
 
     return _type, extra
@@ -163,7 +163,7 @@ def _resolve_field(  # noqa: C901
         _type = typing_extensions.get_args(tp)[1]
 
     if origin is CFlexibleArray:
-        etype = typing.cast(type[CDataType], typing_extensions.get_args(tp)[0])
+        etype = typing.cast("type[CDataType]", typing_extensions.get_args(tp)[0])
         setattr(cls, name, CFlexibleArray(etype))
         return
 
@@ -198,7 +198,7 @@ def _cdataobj(
 ) -> typing.Union[type[_CDO_T], CDataObjectWrapper[_CDO_T]]:
     if cls is None:
         return typing.cast(
-            CDataObjectWrapper[_CDO_T],
+            "CDataObjectWrapper[_CDO_T]",
             partial(
                 _cdataobj, pack=pack, align=align, defaults=defaults, cachens=cachens, frame=frame
             ),

@@ -8,7 +8,9 @@ from test_utils import libc
 from typing_extensions import assert_type
 
 from exactypes.cfuncs import CFnType, argtypes, ccall, restype
-from exactypes.types import CArgObject
+
+if typing.TYPE_CHECKING:
+    from exactypes.types import CArgObject
 
 A = CFnType[[argtypes.c_int, argtypes.c_char_p, argtypes.c_wchar_p], restype.c_longdouble]
 
@@ -42,8 +44,8 @@ assert cp.value == b"lalala"
 
 @bytes_to_float.errcheck
 def bytes_to_float(ret: float, _, args: tuple) -> tuple[float, bytes | None]:
-    ret = typing.cast(float, ret)
-    _orig, rest = typing.cast(tuple[ctypes.c_char_p, CArgObject], args)
-    return ret, typing.cast(ctypes.c_char_p, getattr(rest, "_obj")).value
+    ret = typing.cast("float", ret)
+    _orig, rest = typing.cast("tuple[ctypes.c_char_p, CArgObject]", args)
+    return ret, typing.cast("ctypes.c_char_p", getattr(rest, "_obj")).value
 
 assert bytes_to_float(b"1203.46lalala", se=ctypes.byref(cp)) == (1203.46, b"lalala")
