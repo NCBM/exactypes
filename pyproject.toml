@@ -17,6 +17,7 @@ Repository = "https://github.com/NCBM/exactypes"
 [tool.pyright]
 pythonVersion = "3.9"
 typeCheckingMode = "standard"
+ignore = ["build"]
 
 [tool.ruff]
 line-length = 100
