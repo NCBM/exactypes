@@ -57,12 +57,12 @@ Defining structures and/or unions like dataclasses.
 [0, 0, 0, 0, 0, 0, 0, 0]
 ```
 
-### Better array interface
+### Maybe worse array interface?
 
 Playing with arrays.
 
 ```python
->>> from exactypes import array
+>>> from exactypes.hazmat import array
 >>> a = array.of("c_int")(range(10))
 >>> a[:]
 [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
