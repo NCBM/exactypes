@@ -15,13 +15,14 @@ output:
 
 import ast
 import ctypes
+import sys
 import typing
 from _ctypes import CFuncPtr as _CFuncPtr
 
 from ..cfuncs import CCallWrapper
 
 
-def _generate_stub(
+def _generate_stub(  # noqa: C901
     obj: typing.Union[_CFuncPtr, CCallWrapper, ctypes.Structure, ctypes.Union],
 ) -> ast.stmt:
     """
@@ -40,21 +41,39 @@ def _generate_stub(
             ast.arg(arg=f"arg{i}", annotation=ast.Name(id=arg.__name__))
             for i, arg in enumerate(argtypes)
         ]
-        return ast.FunctionDef(
-            name=getattr(obj, "__name__"),
-            args=ast.arguments(
-                posonlyargs=[],
-                args=args,
-                vararg=None,
-                kwonlyargs=[],
-                kw_defaults=[],
-                kwarg=None,
-                defaults=[],
-            ),
-            body=[ast.Expr(value=ast.Constant(value=Ellipsis))],
-            decorator_list=[],
-            returns=ast.Name(id=restype.__name__ if restype else "None"),
-        )
+        if sys.version_info >= (3, 12):
+            return ast.FunctionDef(
+                name=getattr(obj, "__name__"),
+                args=ast.arguments(
+                    posonlyargs=[],
+                    args=args,
+                    vararg=None,
+                    kwonlyargs=[],
+                    kw_defaults=[],
+                    kwarg=None,
+                    defaults=[],
+                ),
+                body=[ast.Expr(value=ast.Constant(value=Ellipsis))],
+                decorator_list=[],
+                returns=ast.Name(id=restype.__name__ if restype else "None"),
+                type_params=[],
+            )
+        else:
+            return ast.FunctionDef(
+                name=getattr(obj, "__name__"),
+                args=ast.arguments(
+                    posonlyargs=[],
+                    args=args,
+                    vararg=None,
+                    kwonlyargs=[],
+                    kw_defaults=[],
+                    kwarg=None,
+                    defaults=[],
+                ),
+                body=[ast.Expr(value=ast.Constant(value=Ellipsis))],
+                decorator_list=[],
+                returns=ast.Name(id=restype.__name__ if restype else "None"),
+            )
 
     elif isinstance(obj, CCallWrapper):
         # Handle CCallWrapper
@@ -64,21 +83,39 @@ def _generate_stub(
             ast.arg(arg=name, annotation=ast.Name(id=type_.__name__))
             for name, type_ in zip(obj._paramorder, argtypes)
         ]
-        return ast.FunctionDef(
-            name=obj._original_name,
-            args=ast.arguments(
-                posonlyargs=[],
-                args=args,
-                vararg=ast.arg(arg="args") if obj._hasvaargs else None,
-                kwonlyargs=[],
-                kw_defaults=[],
-                kwarg=None,
-                defaults=[],
-            ),
-            body=[ast.Expr(value=ast.Constant(value=Ellipsis))],
-            decorator_list=[],
-            returns=ast.Name(id=restype.__name__),
-        )
+        if sys.version_info >= (3, 12):
+            return ast.FunctionDef(
+                name=obj._original_name,
+                args=ast.arguments(
+                    posonlyargs=[],
+                    args=args,
+                    vararg=ast.arg(arg="args") if obj._hasvaargs else None,
+                    kwonlyargs=[],
+                    kw_defaults=[],
+                    kwarg=None,
+                    defaults=[],
+                ),
+                body=[ast.Expr(value=ast.Constant(value=Ellipsis))],
+                decorator_list=[],
+                returns=ast.Name(id=restype.__name__),
+                type_params=[],
+            )
+        else:
+            return ast.FunctionDef(
+                name=obj._original_name,
+                args=ast.arguments(
+                    posonlyargs=[],
+                    args=args,
+                    vararg=ast.arg(arg="args") if obj._hasvaargs else None,
+                    kwonlyargs=[],
+                    kw_defaults=[],
+                    kwarg=None,
+                    defaults=[],
+                ),
+                body=[ast.Expr(value=ast.Constant(value=Ellipsis))],
+                decorator_list=[],
+                returns=ast.Name(id=restype.__name__),
+            )
 
     elif isinstance(obj, (ctypes.Structure, ctypes.Union)):
         # Handle ctypes.Structure and ctypes.Union
@@ -131,13 +168,23 @@ def _generate_stub(
                     simple=1,
                 )
             )
-        return ast.ClassDef(
-            name=obj.__class__.__name__,
-            bases=[ast.Attribute(value=ast.Name(id="ctypes"), attr=base_name)],
-            keywords=[],
-            body=class_body,
-            decorator_list=[ast.Name(id="dataclass")],
-        )
+        if sys.version_info >= (3, 12):
+            return ast.ClassDef(
+                name=obj.__class__.__name__,
+                bases=[ast.Attribute(value=ast.Name(id="ctypes"), attr=base_name)],
+                keywords=[],
+                body=class_body,
+                decorator_list=[ast.Name(id="dataclass")],
+                type_params=[],
+            )
+        else:
+            return ast.ClassDef(
+                name=obj.__class__.__name__,
+                bases=[ast.Attribute(value=ast.Name(id="ctypes"), attr=base_name)],
+                keywords=[],
+                body=class_body,
+                decorator_list=[ast.Name(id="dataclass")],
+            )
 
     else:
         raise TypeError(f"Unsupported type for stub generation: {type(obj)}")
