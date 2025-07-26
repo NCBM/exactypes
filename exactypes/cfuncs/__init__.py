@@ -118,7 +118,9 @@ def _create_cfunctype(
         restype_,
         *argtypes_,
         flags=flags,
-        _cache=ctypes._c_functype_cache,  # pyright: ignore[reportAttributeAccessIssue]
+        _cache=getattr(ctypes, "_c_functype_cache", None),
+        # internal cache will be removed in future version,
+        # see https://github.com/python/cpython/issues/100926.
     )
 
 
@@ -140,7 +142,9 @@ if os.name == "nt":
             restype_,
             *argtypes_,
             flags=flags,
-            _cache=ctypes._win_functype_cache,  # pyright: ignore[reportAttributeAccessIssue]
+            _cache=getattr(ctypes, "_win_functype_cache", None),
+            # internal cache will be removed in future version,
+            # see https://github.com/python/cpython/issues/100926.
         )
 else:
 
