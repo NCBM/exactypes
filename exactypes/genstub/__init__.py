@@ -1,10 +1,16 @@
 import ast
-from typing import Literal
+import ctypes
+import typing
+from _ctypes import CFuncPtr as _CFuncPtr
 
+from ..cfuncs import CCallWrapper
 from . import std as std
 
 
-def generate_stub(obj, style: Literal["std"]) -> str:
+def generate_stub(
+    obj: typing.Union[_CFuncPtr, CCallWrapper, ctypes.Structure, ctypes.Union],
+    style: typing.Literal["std"],
+) -> str:
     if style == "std":
         stub_ast = std._generate_stub(obj)
     else:
