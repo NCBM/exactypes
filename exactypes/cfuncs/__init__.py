@@ -353,6 +353,7 @@ class CCallWrapper(typing.Generic[_PS, _PT]):
     fnname: str
     argtypes: Sequence[type[CDataType]]
     restype: type[_PT]
+    _original_name: str
     _paramorder: tuple[str, ...]
     _paramdefaults: dict[str, typing.Any]
     _hasvaargs: bool = False
@@ -388,6 +389,7 @@ class CCallWrapper(typing.Generic[_PS, _PT]):
     ) -> None:
         sig = inspect.signature(fn)
         self.fnname = fn.__name__
+        self._original_name = getattr(fn, "__original_name__", self.fnname)
         _argtypes: list[typing.Any] = []
         paramorder: list[str] = []
         self._paramdefaults = {}
@@ -485,6 +487,7 @@ def ccall(lib: ctypes.CDLL, *, override_name: typing.Optional[str] = None):
         :param fn: The function to wrap.
         """
         if override_name is not None:
+            setattr(fn, "__original_name__", fn.__name__)
             fn.__name__ = override_name
         return CCallWrapper(lib, fn, frame)
 
