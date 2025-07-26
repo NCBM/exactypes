@@ -217,7 +217,7 @@ def _cdataobj(
     if (frame := frame.f_back) is None:
         raise RuntimeError("cannot get parent context.")
 
-    setattr(cls, "_exactypes_unresolved_fields_", [])  # noqa: B010
+    setattr(cls, "_exactypes_unresolved_fields_", [])
     # cls._exactypes_unresolved_fields_ = []
 
     for name, tp in (cls.__annotations__ or {}).items():
